@@ -1,9 +1,6 @@
 package com.netbug94.tasks
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl
 import com.google.api.client.auth.oauth2.Credential
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -19,12 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.InputStreamReader
 
-private const val CONFIG_DIR = "config"
-private const val CREDENTIALS_FILE_NAME = "credentials.json"
 private const val TOKENS_DIRECTORY_PATH = "tokens"
-private const val AUTH_RECEIVER_PORT = 8888
 private const val APPLICATION_NAME = "HeraldoGestor"
 
 private val logger = LoggerFactory.getLogger("com.netbug94.tasks.GoogleTasksClient")
@@ -38,6 +31,9 @@ class GoogleTasksClient {
     @Volatile var pendingAuthUrl: String? = null
         private set
 
+    @Volatile var expectedState: String? = null
+        private set
+
     private var _credential: Credential? = null
     val credential: Credential
         get() {
@@ -47,48 +43,57 @@ class GoogleTasksClient {
             return _credential!!
         }
 
-    private fun buildCredential(): Credential {
-        val configFile = File(CONFIG_DIR, CREDENTIALS_FILE_NAME)
-
-        if (!configFile.exists()) {
-            throw kotlinx.io.files.FileNotFoundException(
-                "🚨 CONFIG ERROR: '${configFile.absolutePath}' not found!"
-            )
+    private val flow: GoogleAuthorizationCodeFlow by lazy {
+        val jsonStr = System.getenv("GOOGLE_CREDENTIALS_JSON")
+        if (jsonStr.isNullOrBlank()) {
+            throw IllegalStateException("🚨 Missing GOOGLE_CREDENTIALS_JSON environment variable. Please set it in your .env file.")
         }
+        val clientSecrets = GoogleClientSecrets.load(jsonFactory, java.io.StringReader(jsonStr))
 
-        val inputStream = configFile.inputStream()
-        val clientSecrets = GoogleClientSecrets.load(jsonFactory, InputStreamReader(inputStream))
-
-        val flow = GoogleAuthorizationCodeFlow.Builder(
+        GoogleAuthorizationCodeFlow.Builder(
             httpTransport, jsonFactory, clientSecrets,
             listOf(TasksScopes.TASKS, CalendarScopes.CALENDAR_READONLY)
         )
             .setDataStoreFactory(FileDataStoreFactory(File(TOKENS_DIRECTORY_PATH)))
             .setAccessType("offline")
             .build()
+    }
 
-        val receiver = LocalServerReceiver.Builder()
-            .setHost("0.0.0.0")
-            .setPort(AUTH_RECEIVER_PORT)
-            .build()
-
-        // --- NEW: Intercept the URL so Docker doesn't crash trying to open a browser ---
-        val app = object : AuthorizationCodeInstalledApp(flow, receiver) {
-            override fun onAuthorization(authorizationUrl: AuthorizationCodeRequestUrl) {
-                val url = authorizationUrl.build()
-                pendingAuthUrl = url // Save it for the dashboard to read
-
-                logger.warn("==================================================")
-                logger.warn("🚨 GOOGLE AUTH REQUIRED 🚨")
-                logger.warn("Please open your Ktor Dashboard or copy this URL:")
-                logger.warn(url)
-                logger.warn("==================================================")
-            }
+    private fun buildCredential(): Credential {
+        val cred = flow.loadCredential("user")
+        if (cred != null && (cred.refreshToken != null || cred.expiresInSeconds == null || cred.expiresInSeconds > 60)) {
+            pendingAuthUrl = null
+            return cred
         }
 
-        val authResult = app.authorize("user")
-        pendingAuthUrl = null // Clear the link once successful!
-        return authResult
+        // We need auth! Generate CSRF state and Auth URL.
+        val state = java.util.UUID.randomUUID().toString()
+        expectedState = state
+
+        val url = flow.newAuthorizationUrl()
+            .setRedirectUri("https://heraldo.local/Callback")
+            .setState(state)
+            .build()
+            
+        pendingAuthUrl = url
+        
+        logger.warn("==================================================")
+        logger.warn("🚨 GOOGLE AUTH REQUIRED 🚨")
+        logger.warn("Please open your Dashboard or copy this URL:")
+        logger.warn(url)
+        logger.warn("==================================================")
+        
+        throw IllegalStateException("Google Auth Required. Check the Dashboard.")
+    }
+
+    fun exchangeCode(code: String) {
+        val response = flow.newTokenRequest(code)
+            .setRedirectUri("https://heraldo.local/Callback")
+            .execute()
+        _credential = flow.createAndStoreCredential(response, "user")
+        pendingAuthUrl = null
+        expectedState = null
+        logger.info("✅ Google Auth Successful!")
     }
 
     private var _googleTasksService: Tasks? = null
