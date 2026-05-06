@@ -1,10 +1,42 @@
 [versions]
-kotlin = "2.3.20"
-logback = "1.5.21"
+bytebuddy = "1.18.8"
+coroutines = "1.10.2"
+
+# Google Versions
+google-api-client = "2.9.0"
+google-oauth-jetty = "1.34.1"
+google-calendar = "v3-rev20260225-2.0.0"
+google-tasks = "v1-rev20251102-2.0.0"
+
+koin = "4.2.1"
+kotlin = "2.3.21"
+logback = "1.5.32"
+mockk = "1.14.9"
 
 [libraries]
+bytebuddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "bytebuddy" }
+
+# Google APIs (Cleaned)
+google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "google-api-client" }
+google-apis-calendar = { module = "com.google.apis:google-api-services-calendar", version.ref = "google-calendar" }
+google-apis-tasks = { module = "com.google.apis:google-api-services-tasks", version.ref = "google-tasks" }
+google-oauth-jetty = { module = "com.google.oauth-client:google-oauth-client-jetty", version.ref = "google-oauth-jetty" }
+
+# DI & Logging
+koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
+koin-loggerSlf4j = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin" }
+
+# Coroutines
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Ktor
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# Testing
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

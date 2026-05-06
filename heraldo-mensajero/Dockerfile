@@ -2,7 +2,7 @@ FROM node:20-slim
 
 # Install latest chromium and dependencies for Puppeteer
 RUN apt-get update \
-    && apt-get install -y chromium \
+    && apt-get install -y chromium dumb-init \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
@@ -23,4 +23,5 @@ RUN npm run build
 
 EXPOSE 3000
 
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["npm", "start"]

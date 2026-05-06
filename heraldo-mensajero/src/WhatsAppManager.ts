@@ -93,6 +93,15 @@ export class WhatsAppManager {
         return false;
     }
 
+    async stop() {
+        if (this.client) {
+            logger.warn(`🛑 Stopping WhatsApp client gracefully...`);
+            await this.client.destroy().catch(e => logger.error(`Cleanup failed: ${e}`));
+            this.client = null;
+        }
+        this.sessionState = { status: 'OFFLINE', reason: 'Graceful Shutdown' };
+    }
+
     async deleteAccount() {
         if (this.client) {
             logger.warn(`💀 Killing primary session`);

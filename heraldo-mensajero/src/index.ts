@@ -89,4 +89,22 @@ app.post('/send', async (req, res) => {
     res.status(success ? 200 : 500).json({ success });
 });
 
-app.listen(PORT, () => logger.info(`🚀 Heraldo Mensajero running on port ${PORT}`));
+const server = app.listen(PORT, () => logger.info(`🚀 Heraldo Mensajero running on port ${PORT}`));
+
+// ==========================================
+// GRACEFUL SHUTDOWN
+// ==========================================
+const shutdown = async (signal: string) => {
+    logger.info(`\n🛑 Received ${signal}. Shutting down Mensajero gracefully...`);
+    
+    server.close(() => {
+        logger.info('✅ HTTP server closed.');
+    });
+
+    await wa.stop();
+    logger.info('✅ Client stopped. Exiting process.');
+    process.exit(0);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
