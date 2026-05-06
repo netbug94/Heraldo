@@ -39,6 +39,23 @@ fun Application.dashboardRoutes() {
             call.respondText(html, ContentType.Text.Html)
         }
 
+        get("/Callback") {
+            val code = call.request.queryParameters["code"]
+            val error = call.request.queryParameters["error"]
+            
+            if (code != null) {
+                googleTasksClient.submitAuthCode(code)
+                val html = DashboardViews.renderLoadingState("✅ Authorization successful! You can close this window.")
+                call.respondText(html, ContentType.Text.Html)
+            } else if (error != null) {
+                val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
+                call.respondText(html, ContentType.Text.Html)
+            } else {
+                val html = DashboardViews.renderLoadingState("❌ Authorization failed: No code provided.")
+                call.respondText(html, ContentType.Text.Html)
+            }
+        }
+
         get("/sync") {
             repository.fetchTodayTasks()
             val html = DashboardViews.renderLoadingState("Syncing Tasks...")

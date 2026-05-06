@@ -3,7 +3,9 @@ package com.netbug94.tasks
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
+import com.google.api.client.extensions.java6.auth.oauth2.VerificationCodeReceiver
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -24,7 +26,6 @@ import java.io.InputStreamReader
 private const val CONFIG_DIR = "config"
 private const val CREDENTIALS_FILE_NAME = "credentials.json"
 private const val TOKENS_DIRECTORY_PATH = "tokens"
-private const val AUTH_RECEIVER_PORT = 8888
 private const val APPLICATION_NAME = "HeraldoGestor"
 
 private val logger = LoggerFactory.getLogger("com.netbug94.tasks.GoogleTasksClient")
@@ -37,6 +38,12 @@ class GoogleTasksClient {
     // --- NEW: Expose the auth URL to the dashboard ---
     @Volatile var pendingAuthUrl: String? = null
         private set
+
+    private var codeDeferred: CompletableDeferred<String>? = null
+
+    fun submitAuthCode(code: String) {
+        codeDeferred?.complete(code)
+    }
 
     private var _credential: Credential? = null
     val credential: Credential
@@ -67,10 +74,21 @@ class GoogleTasksClient {
             .setAccessType("offline")
             .build()
 
-        val receiver = LocalServerReceiver.Builder()
-            .setHost("0.0.0.0")
-            .setPort(AUTH_RECEIVER_PORT)
-            .build()
+        val receiver = object : VerificationCodeReceiver {
+            override fun getRedirectUri(): String {
+                return "http://127.0.0.1:8080/Callback"
+            }
+
+            override fun waitForCode(): String {
+                val deferred = CompletableDeferred<String>()
+                codeDeferred = deferred
+                return runBlocking { deferred.await() }
+            }
+
+            override fun stop() {
+                codeDeferred?.cancel()
+            }
+        }
 
         // --- NEW: Intercept the URL so Docker doesn't crash trying to open a browser ---
         val app = object : AuthorizationCodeInstalledApp(flow, receiver) {
