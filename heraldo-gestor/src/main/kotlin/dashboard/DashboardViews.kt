@@ -78,6 +78,14 @@ internal object DashboardViews {
                 <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
                 
                 <script>
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/ws');
+                    ws.onmessage = function(event) {
+                        if (event.data === 'RELOAD') {
+                            window.location.reload();
+                        }
+                    };
+
                     const btn = document.getElementById('scroll-top');
                     window.addEventListener('scroll', () => {
                         btn.classList.toggle('visible', window.scrollY > 200);

@@ -1,0 +1,9 @@
+gestor.heraldo.local {
+    tls internal
+    reverse_proxy gestor:8080
+}
+
+mensajero.heraldo.local {
+    tls internal
+    reverse_proxy mensajero:3000
+}

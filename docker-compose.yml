@@ -1,10 +1,27 @@
 services:
+  caddy:
+    image: caddy:alpine
+    container_name: heraldo-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - heraldo-network
+    depends_on:
+      - gestor
+      - mensajero
+
   mensajero:
     build:
       context: ./heraldo-mensajero
     container_name: heraldo-mensajero
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     volumes:
       - ./heraldo-mensajero/sessions:/app/sessions
     env_file:
@@ -17,14 +34,17 @@ services:
     build:
       context: ./heraldo-gestor
     container_name: heraldo-gestor
+    expose:
+      - "8080"
     ports:
-      - "8080:8080"   # API
-      - "8888:8888"   # Google Auth Callback
+      - "8888:8888"   # Keep this exposed if needed for legacy fallback, otherwise we can remove it
     volumes:
       - ./heraldo-gestor/config:/app/config
       - ./heraldo-gestor/tokens:/app/tokens
     env_file:
       - .env
+    environment:
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
     networks:
       - heraldo-network
     depends_on:
@@ -34,3 +54,7 @@ services:
 networks:
   heraldo-network:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

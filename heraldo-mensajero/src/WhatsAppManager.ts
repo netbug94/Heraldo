@@ -57,6 +57,7 @@ export class WhatsAppManager {
             this.sessionState = { status: 'CONNECTED' };
             this.client = client;
             logger.info(`✅ Primary Session Connected`);
+            fetch('http://gestor:8080/webhook/mensajero', { method: 'POST' }).catch(() => {});
         });
 
         client.on('disconnected', (reason) => {
@@ -64,6 +65,7 @@ export class WhatsAppManager {
             this.sessionState = { status: 'OFFLINE', reason };
             client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
             this.client = null;
+            fetch('http://gestor:8080/webhook/mensajero', { method: 'POST' }).catch(() => {});
         });
 
         client.on('auth_failure', (msg) => {

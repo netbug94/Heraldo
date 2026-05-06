@@ -8,6 +8,7 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.routing.routing
+import io.ktor.server.websocket.*
 import org.koin.dsl.module
 import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
@@ -45,6 +46,13 @@ fun Application.module() {
 
     install(CallLogging) {
         level = Level.INFO
+    }
+
+    install(WebSockets) {
+        pingPeriod = kotlin.time.Duration.parse("15s")
+        timeout = kotlin.time.Duration.parse("15s")
+        maxFrameSize = Long.MAX_VALUE
+        masking = false
     }
 
     routing {
