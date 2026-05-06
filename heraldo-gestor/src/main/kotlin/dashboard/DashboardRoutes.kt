@@ -1,5 +1,6 @@
 package com.netbug94.dashboard
 
+import com.netbug94.auth.requireAuth
 import com.netbug94.core.TimezoneProvider
 import com.netbug94.mensajero.MensajeroClient
 import com.netbug94.tasks.GoogleTasksClient
@@ -28,93 +29,94 @@ fun Application.dashboardRoutes() {
     val repository by inject<TaskRepository>()
     val timezoneProvider by inject<TimezoneProvider>()
     val mensajeroClient by inject<MensajeroClient>()
-    val googleTasksClient by inject<GoogleTasksClient>() // <--- NEW: Inject Google Client
+    val googleTasksClient by inject<GoogleTasksClient>()
 
     routing {
-        get("/") {
-            call.response.header(HttpHeaders.CacheControl, "no-cache, no-store, must-revalidate")
+        requireAuth {
+            get("/") {
+                call.response.header(HttpHeaders.CacheControl, "no-cache, no-store, must-revalidate")
 
-            val tasks = repository.getAllCachedTasks().sortedBy { it.dueTime }
-            val userTime = timezoneProvider.getMyLocalTime()
-            val currentZone = userTime.zone.id
-            val formattedTime = userTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                val tasks = repository.getAllCachedTasks().sortedBy { it.dueTime }
+                val userTime = timezoneProvider.getMyLocalTime()
+                val currentZone = userTime.zone.id
+                val formattedTime = userTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
-            // --- NEW: Grab the pending URL if it exists ---
-            val authLink = googleTasksClient.pendingAuthUrl
+                val authLink = googleTasksClient.pendingAuthUrl
 
-            val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
-            call.respondText(html, ContentType.Text.Html)
-        }
-
-        get("/Callback") {
-            val code = call.request.queryParameters["code"]
-            val error = call.request.queryParameters["error"]
-            val state = call.request.queryParameters["state"]
-            
-            if (error != null) {
-                val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
-                return@get call.respondText(html, ContentType.Text.Html)
-            }
-            
-            if (code == null || state == null) {
-                val html = DashboardViews.renderLoadingState("❌ Authorization failed: Missing code or state.")
-                return@get call.respondText(html, ContentType.Text.Html)
-            }
-
-            if (state != googleTasksClient.expectedState) {
-                val html = DashboardViews.renderLoadingState("❌ Authorization failed: CSRF state mismatch!")
-                return@get call.respondText(html, ContentType.Text.Html)
-            }
-
-            try {
-                googleTasksClient.exchangeCode(code)
-                val html = DashboardViews.renderLoadingState("✅ Authorization successful! You can close this window.")
-                call.respondText(html, ContentType.Text.Html)
-            } catch (e: Exception) {
-                val html = DashboardViews.renderLoadingState("❌ Code exchange failed: ${e.message}")
+                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
                 call.respondText(html, ContentType.Text.Html)
             }
-        }
 
-        get("/sync") {
-            repository.fetchTodayTasks()
-            val html = DashboardViews.renderLoadingState("Syncing Tasks...")
-            call.respondText(html, ContentType.Text.Html)
-        }
+            get("/Callback") {
+                val code = call.request.queryParameters["code"]
+                val error = call.request.queryParameters["error"]
+                val state = call.request.queryParameters["state"]
 
-        get("/sync-zone") {
-            timezoneProvider.forceRefresh()
-            val html = DashboardViews.renderLoadingState("Updating Timezone...")
-            call.respondText(html, ContentType.Text.Html)
-        }
+                if (error != null) {
+                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
+                    return@get call.respondText(html, ContentType.Text.Html)
+                }
 
-        post("/sync-env") {
-            val request = call.receive<TemplateUpdateRequest>()
-            mensajeroClient.updateTemplate(request.template)
-            val html = DashboardViews.renderLoadingState("Template Updated!")
-            call.respondText(html, ContentType.Text.Html)
-        }
+                if (code == null || state == null) {
+                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: Missing code or state.")
+                    return@get call.respondText(html, ContentType.Text.Html)
+                }
 
-        webSocket("/ws") {
-            connections += this
-            try {
-                incoming.consumeEach { _ -> /* keep-alive: we don't process client messages */ }
-            } catch (_: ClosedReceiveChannelException) {
-                // Ignore disconnect
-            } finally {
-                connections -= this
-            }
-        }
+                if (state != googleTasksClient.expectedState) {
+                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: CSRF state mismatch!")
+                    return@get call.respondText(html, ContentType.Text.Html)
+                }
 
-        post("/webhook/mensajero") {
-            connections.forEach {
                 try {
-                    it.send("RELOAD")
-                } catch (_: Exception) {
-                    // Ignore dead sockets
+                    googleTasksClient.exchangeCode(code)
+                    val html = DashboardViews.renderLoadingState("✅ Royal Seal Accepted! You may close this parchment.")
+                    call.respondText(html, ContentType.Text.Html)
+                } catch (e: Exception) {
+                    val html = DashboardViews.renderLoadingState("❌ The Seal was rejected: ${e.message}")
+                    call.respondText(html, ContentType.Text.Html)
                 }
             }
-            call.respond(HttpStatusCode.OK)
+
+            get("/sync") {
+                repository.fetchTodayTasks()
+                val html = DashboardViews.renderLoadingState("Summoning Decrees...")
+                call.respondText(html, ContentType.Text.Html)
+            }
+
+            get("/sync-zone") {
+                timezoneProvider.forceRefresh()
+                val html = DashboardViews.renderLoadingState("Aligning Astrolabe...")
+                call.respondText(html, ContentType.Text.Html)
+            }
+
+            post("/sync-env") {
+                val request = call.receive<TemplateUpdateRequest>()
+                mensajeroClient.updateTemplate(request.template)
+                val html = DashboardViews.renderLoadingState("The Ravens have been Dispatched!")
+                call.respondText(html, ContentType.Text.Html)
+            }
+
+            webSocket("/ws") {
+                connections += this
+                try {
+                    incoming.consumeEach { _ -> /* keep-alive */ }
+                } catch (_: ClosedReceiveChannelException) {
+                    // Ignore disconnect
+                } finally {
+                    connections -= this
+                }
+            }
+
+            post("/webhook/mensajero") {
+                connections.forEach {
+                    try {
+                        it.send("RELOAD")
+                    } catch (_: Exception) {
+                        // Ignore dead sockets
+                    }
+                }
+                call.respond(HttpStatusCode.OK)
+            }
         }
     }
 }
