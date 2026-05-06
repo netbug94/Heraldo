@@ -19,27 +19,27 @@ export const getDashboardHtml = () => `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heraldo Mensajero</title>
+    <title>Heraldo Mensajero - The Abyss</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Parchment & Ink Theme */
-            --bg:       #e8dfca; /* Darker parchment backdrop */
-            --surface:  #f4ecd8; /* Lighter vellum for cards */
-            --primary:  #8b2635; /* Wax seal red */
-            --primary-hover: #6e1c28;
-            --text:     #2c241b; /* Iron gall ink */
-            --muted:    #5c5346; /* Faded ink */
-            --success:  #3a5a40; /* Muted forest green */
-            --warning:  #967230; /* Antiqued gold/brass */
-            --danger:   #8b2635; 
-            --border:   #c4b59d; /* Faint ink line */
-            --gold:     #7a5c24; /* Muted matte gold */
+            /* The Abyss Theme */
+            --bg:       #050505; /* The Abyss */
+            --surface:  #0a0a0a; /* Cold dark stone */
+            --primary:  #a83a22; /* Dying Ember */
+            --primary-hover: #c8492c; /* Stoked Ember */
+            --text:     #a39f98; /* Ash */
+            --muted:    #54514d; /* Dark Ash */
+            --success:  #c87a2a; /* Bonfire Lit */
+            --warning:  #635c55; /* Cold Iron */
+            --danger:   #7a1a1a; /* Blood */
+            --border:   #242220; /* Tarnished Metal */
+            --glow:     rgba(200, 122, 42, 0.15); /* Faint fire glow */
         }
 
         body {
@@ -51,8 +51,7 @@ export const getDashboardHtml = () => `
             flex-direction: column;
             align-items: center;
             padding: 2rem 1rem 3rem;
-            /* Subtle paper texture illusion using radial gradient */
-            background-image: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.05) 100%);
+            background-image: radial-gradient(circle at center, #11100f 0%, #030303 100%);
         }
 
         /* ── Header ── */
@@ -67,63 +66,71 @@ export const getDashboardHtml = () => `
         .page-header h1 {
             font-family: 'Cinzel', serif;
             font-size: clamp(1.6rem, 5vw, 2.2rem);
-            color: var(--text);
-            font-weight: 700;
+            color: var(--success);
+            font-weight: 400;
             margin-bottom: 0.3rem;
-            letter-spacing: 0.02em;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px var(--glow);
         }
         .page-header p {
             color: var(--muted);
             font-size: 1.2rem;
             font-style: italic;
+            letter-spacing: 1px;
         }
 
         /* ── Engine status pill ── */
         .engine-status {
             display: inline-flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.8rem;
             font-family: 'Cinzel', serif;
             font-size: 0.85rem;
             font-weight: 600;
             color: var(--text);
-            letter-spacing: 0.04em;
+            letter-spacing: 2px;
             text-transform: uppercase;
             margin-bottom: 1.25rem;
-            padding: 6px 16px;
+            padding: 8px 20px;
             border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(4px);
         }
         .engine-dot {
             width: 8px; height: 8px;
-            border-radius: 50%;
             background: var(--muted);
             flex-shrink: 0;
+            border-radius: 0; /* Square for rougher medieval feel */
+            transform: rotate(45deg); /* Diamond shape */
+            transition: all 0.5s ease;
         }
-        .dot-online   { background: var(--success); }
-        .dot-offline  { background: var(--danger); }
-        .dot-starting { background: var(--warning); animation: blink 1.5s infinite; }
-        .dot-qr       { background: var(--warning); animation: blink 1.5s infinite; }
+        .dot-online   { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .dot-offline  { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+        .dot-starting { background: var(--text); animation: ember-pulse 1.5s infinite; }
+        .dot-qr       { background: var(--primary); animation: ember-pulse 1.5s infinite; }
 
         /* ── Main card ── */
         .card {
             width: 100%;
             max-width: 480px;
-            background: var(--surface);
+            background: rgba(10, 10, 10, 0.8);
             border: 1px solid var(--border);
-            padding: 2.5rem 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
+            padding: 3rem 2rem;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 0 10px 30px rgba(0,0,0,0.8);
             position: relative;
+            backdrop-filter: blur(5px);
         }
-        /* Corner flourishes using pseudo-elements */
+        /* Wrought Iron Corner Braces */
         .card::before, .card::after {
             content: '';
             position: absolute;
-            width: 15px; height: 15px;
-            border: 1px solid var(--border);
+            width: 20px; height: 20px;
+            border: 2px solid var(--muted);
+            opacity: 0.5;
         }
-        .card::before { top: 6px; left: 6px; border-right: none; border-bottom: none; }
-        .card::after  { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+        .card::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .card::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
 
         /* ── State views ── */
         .state-view {
@@ -132,100 +139,110 @@ export const getDashboardHtml = () => `
             align-items: center;
             text-align: center;
         }
-        .state-icon   { font-size: 2.5rem; margin-bottom: 1rem; line-height: 1; filter: grayscale(20%) opacity(0.9); }
-        .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
-        .state-sub    { color: var(--muted); font-size: 1.15rem; line-height: 1.6; max-width: 300px; margin-bottom: 1.75rem; }
+        .state-icon   { font-size: 2.5rem; margin-bottom: 1rem; line-height: 1; filter: grayscale(100%) brightness(80%); opacity: 0.7; }
+        .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5rem; color: var(--text); text-transform: uppercase; }
+        .state-sub    { color: var(--muted); font-size: 1.15rem; font-style: italic; line-height: 1.6; max-width: 300px; margin-bottom: 2rem; }
 
         /* ── Status badge ── */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
-            padding: 0.3rem 0.85rem;
+            gap: 0.6rem;
+            padding: 0.3rem 0;
             font-family: 'Cinzel', serif;
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 2px;
             text-transform: uppercase;
             margin-bottom: 1.5rem;
-            border-bottom: 2px solid currentColor;
+            border-bottom: 1px solid currentColor;
         }
-        .badge-online   { color: var(--success); }
-        .badge-offline  { color: var(--danger); }
-        .badge-starting { color: var(--warning); animation: blink 1.5s infinite; }
-        .badge-qr       { color: var(--warning); animation: blink 1.5s infinite; }
+        .badge-online   { color: var(--success); text-shadow: 0 0 10px var(--glow); }
+        .badge-offline  { color: var(--danger); text-shadow: 0 0 10px rgba(122,26,26,0.4); }
+        .badge-starting { color: var(--text); animation: ember-pulse 2s infinite; }
+        .badge-qr       { color: var(--primary); animation: ember-pulse 2s infinite; }
 
         /* ── Connected box ── */
         .connected-box {
             width: 100%;
-            background: rgba(0,0,0,0.02);
+            background: rgba(0,0,0,0.4);
             border: 1px solid var(--border);
-            border-left: 3px solid var(--success);
+            border-left: 2px solid var(--success);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            box-shadow: inset 0 0 20px rgba(200, 122, 42, 0.05);
         }
         .connected-box .icon { font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.8; }
-        .connected-box h3 { font-family: 'Cinzel', serif; color: var(--text); font-size: 1.1rem; margin-bottom: 0.3rem; }
-        .connected-box p  { color: var(--muted); font-size: 1.05rem; }
+        .connected-box h3 { font-family: 'Cinzel', serif; color: var(--success); font-size: 1.1rem; margin-bottom: 0.3rem; letter-spacing: 1px; font-weight: 400; text-transform: uppercase; }
+        .connected-box p  { color: var(--text); font-size: 1.05rem; font-style: italic; }
 
-        /* ── QR wrapper ── */
+        /* ── QR wrapper (Summoning Sign) ── */
         .qr-wrapper {
-            background: #ffffff;
-            border: 1px solid var(--border);
+            background: #d3ccc0; /* Old bone / ash color to make QR scannable */
+            border: 3px solid var(--border);
             padding: 14px;
             margin-bottom: 1rem;
+            box-shadow: 0 0 30px rgba(168, 58, 34, 0.2);
+            position: relative;
+        }
+        .qr-wrapper::before {
+            content: ''; position: absolute; inset: -6px; border: 1px solid var(--muted); opacity: 0.3;
         }
         .qr-hint {
             font-family: 'Cinzel', serif;
             color: var(--muted);
             font-size: 0.85rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 2px;
             text-transform: uppercase;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        /* ── Spinner (Simple Astrolabe Ring) ── */
+        /* ── Spinner (The Dark Sign) ── */
         .spinner {
-            width: 48px; height: 48px;
-            border: 2px solid transparent;
-            border-top: 2px solid var(--text);
-            border-right: 2px solid var(--text);
+            width: 50px; height: 50px;
+            border: 2px solid rgba(200, 122, 42, 0.1);
+            border-top: 2px solid var(--success);
             border-radius: 50%;
-            animation: spin 1.5s linear infinite;
-            margin-bottom: 1.25rem;
+            animation: spin 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 15px var(--glow);
         }
 
         /* ── Buttons ── */
         .btn {
             width: 100%;
-            padding: 0.85rem 1.25rem;
+            padding: 1rem 1.25rem;
             font-family: 'Cinzel', serif;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             background: transparent;
-        }
-        .btn + .btn { margin-top: 0.75rem; }
-        .btn-primary {
-            background: var(--primary);
-            color: #f4ecd8;
-            border: 1px solid var(--primary);
-        }
-        .btn-primary:hover { 
-            background: var(--primary-hover);
-            border-color: var(--primary-hover);
-        }
-        .btn-danger {
-            color: var(--danger);
+            position: relative;
+            overflow: hidden;
+            color: var(--text);
             border: 1px solid var(--border);
         }
+        .btn + .btn { margin-top: 0.75rem; }
+        
+        .btn-primary:hover { 
+            color: var(--success);
+            border-color: var(--success);
+            box-shadow: 0 0 15px var(--glow), inset 0 0 10px var(--glow);
+            text-shadow: 0 0 8px var(--success);
+        }
+        
+        .btn-danger {
+            color: var(--muted);
+        }
         .btn-danger:hover { 
-            background: rgba(139, 38, 53, 0.05);
+            color: var(--danger);
             border-color: var(--danger);
+            box-shadow: 0 0 15px rgba(122,26,26,0.3), inset 0 0 10px rgba(122,26,26,0.2);
+            text-shadow: 0 0 8px var(--danger);
         }
 
         /* ── Test message row ── */
@@ -233,74 +250,82 @@ export const getDashboardHtml = () => `
             display: flex;
             gap: 0.5rem;
             width: 100%;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         .send-row input {
             flex: 1;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-bottom: 2px solid var(--border);
-            padding: 0.7rem 0.9rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-bottom: 1px solid var(--muted);
+            padding: 0.8rem 1rem;
             color: var(--text);
             font-family: 'Cormorant Garamond', serif;
             font-size: 1.15rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.3s;
             min-width: 0;
+            text-align: center;
         }
-        .send-row input:focus { border-color: var(--text); }
+        .send-row input:focus { border-bottom-color: var(--success); color: var(--success); }
         .send-row input::placeholder { color: var(--muted); font-style: italic; }
         .send-row button {
-            background: var(--text);
-            color: var(--surface);
-            border: 1px solid var(--text);
-            padding: 0.7rem 1.1rem;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.8rem 1.2rem;
             font-family: 'Cinzel', serif;
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
-            transition: background 0.2s;
+            transition: all 0.3s;
             flex-shrink: 0;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .send-row button:hover { background: #1a1510; }
-        .send-row button:disabled { opacity: 0.5; cursor: default; }
+        .send-row button:hover { 
+            color: var(--success);
+            border-color: var(--success);
+            box-shadow: 0 0 10px var(--glow); 
+        }
+        .send-row button:disabled { opacity: 0.3; cursor: default; }
 
         /* ── Footer ── */
         .page-footer {
-            margin-top: 2rem;
+            margin-top: 3rem;
             color: var(--muted);
             font-family: 'Cinzel', serif;
             font-size: 0.75rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 3px;
             text-align: center;
+            text-transform: uppercase;
+            opacity: 0.6;
         }
 
-        @keyframes spin  { to { transform: rotate(360deg); } }
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        @keyframes spin  { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes ember-pulse { 0%,100% { opacity:1; filter: brightness(1); } 50% { opacity:0.6; filter: brightness(0.5); } }
     </style>
 </head>
 <body>
 
     <div class="page-header">
-        <h1>📜 Heraldo Mensajero</h1>
-        <p>WhatsApp Engine</p>
+        <h1>Heraldo Mensajero</h1>
+        <p>The Abyssal Engine</p>
     </div>
 
     <div class="engine-status">
         <div class="engine-dot" id="engine-dot"></div>
-        <span id="engine-label">Checking status...</span>
+        <span id="engine-label">Gazing into the abyss...</span>
     </div>
 
     <div class="card" id="main-card">
         <div class="state-view">
             <div class="spinner"></div>
-            <div class="state-sub">Connecting to WhatsApp Engine...</div>
+            <div class="state-sub">Communing with the ancient signals...</div>
         </div>
     </div>
 
-    <div class="page-footer">Heraldo Mensajero &middot; Single-Session Engine</div>
+    <div class="page-footer">Heraldo Mensajero &middot; Solitary Summoning</div>
 
     <script>
         const API_HEADERS = {
@@ -314,11 +339,11 @@ export const getDashboardHtml = () => `
             const label = document.getElementById('engine-label');
             dot.className = 'engine-dot';
             const map = {
-                CONNECTED:   ['dot-online',   'WhatsApp Engine: Connected'],
-                OFFLINE:     ['dot-offline',  'WhatsApp Engine: Offline'],
-                AUTH_FAILED: ['dot-offline',  'Auth Failed'],
-                STARTING:    ['dot-starting', 'Starting Engine...'],
-                AWAITING_QR: ['dot-qr',       'Awaiting QR Scan'],
+                CONNECTED:   ['dot-online',   'The Flame is Kindled'],
+                OFFLINE:     ['dot-offline',  'The Fire Fades...'],
+                AUTH_FAILED: ['dot-offline',  'Curse of the Undead'],
+                STARTING:    ['dot-starting', 'Kindling the Engine...'],
+                AWAITING_QR: ['dot-qr',       'Awaiting the Sigil'],
             };
             const [cls, text] = map[status] || ['', status];
             if (cls) dot.classList.add(cls);
@@ -331,11 +356,11 @@ export const getDashboardHtml = () => `
             const card = document.getElementById('main-card');
             card.innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-offline">&bull; Offline</div>
-                    <div class="state-icon">🛡️</div>
-                    <div class="state-title">Engine is Offline</div>
-                    <div class="state-sub">\${reason ? 'Reason: ' + reason + '.' : 'Start the engine to connect WhatsApp.'}</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Start WhatsApp Engine</button>
+                    <div class="status-badge badge-offline">🌑 Dormant</div>
+                    <div class="state-icon">⚔️</div>
+                    <div class="state-title">The Engine Slumbers</div>
+                    <div class="state-sub">\${reason ? 'The curse reads: ' + reason + '.' : 'Stoke the bonfire to awaken the engine.'}</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Kindle the Flame</button>
                 </div>
             \`;
         }
@@ -344,10 +369,10 @@ export const getDashboardHtml = () => `
             setEngineBar('STARTING');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-starting">&bull; Starting</div>
+                    <div class="status-badge badge-starting">🌫️ Traversing the Fog</div>
                     <div class="spinner"></div>
-                    <div class="state-title">Booting Chromium...</div>
-                    <div class="state-sub">This takes a few moments. The QR cipher will appear shortly.</div>
+                    <div class="state-title">Summoning Phantoms...</div>
+                    <div class="state-sub">The abyss takes time to answer. The summoning sigil will appear shortly.</div>
                 </div>
             \`;
         }
@@ -356,10 +381,10 @@ export const getDashboardHtml = () => `
             setEngineBar('AWAITING_QR');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-qr">&bull; Awaiting QR Scan</div>
+                    <div class="status-badge badge-qr">👁️ Awaiting Sigil</div>
                     <div class="qr-wrapper"><div id="qr-code"></div></div>
-                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Scan QR</div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Cancel & Go Offline</button>
+                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Offer Sigil</div>
+                    <button class="btn btn-danger" onclick="stopEngine()">Abandon Summoning</button>
                 </div>
             \`;
             setTimeout(() => {
@@ -367,8 +392,8 @@ export const getDashboardHtml = () => `
                 if (el && qrCode) {
                     new QRCode(el, {
                         text: qrCode, width: 220, height: 220,
-                        colorDark: '#2c241b', /* Matching the Iron gall ink text color */
-                        colorLight: '#ffffff',
+                        colorDark: '#050505', /* Pitch black for camera scanning */
+                        colorLight: '#d3ccc0', /* Bone/Ash background */
                         correctLevel: QRCode.CorrectLevel.L
                     });
                 }
@@ -379,17 +404,17 @@ export const getDashboardHtml = () => `
             setEngineBar('CONNECTED');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-online">&bull; Connected</div>
+                    <div class="status-badge badge-online">🔥 Kindled</div>
                     <div class="connected-box">
                         <div class="icon">📜</div>
-                        <h3>Signal Established</h3>
-                        <p>Ready to receive and deliver tasks from Heraldo Gestor.</p>
+                        <h3>Covenant Established</h3>
+                        <p>The link is forged. Ready to channel souls from the Gestor.</p>
                     </div>
                     <div class="send-row">
-                        <input id="test-msg" type="text" placeholder="Draft a missive..." />
-                        <button id="send-btn" onclick="sendTest()">Send</button>
+                        <input id="test-msg" type="text" placeholder="Inscribe a phantom message..." />
+                        <button id="send-btn" onclick="sendTest()">Invoke</button>
                     </div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Sever Connection</button>
+                    <button class="btn btn-danger" onclick="stopEngine()">Sever the Link</button>
                 </div>
             \`;
         }
@@ -398,11 +423,11 @@ export const getDashboardHtml = () => `
             setEngineBar('AUTH_FAILED');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-offline">&bull; Auth Failed</div>
-                    <div class="state-icon">🚩</div>
-                    <div class="state-title">Authentication Failed</div>
-                    <div class="state-sub">WhatsApp rejected the session. Restart the engine and scan the QR code anew.</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Restart Engine</button>
+                    <div class="status-badge badge-offline">🩸 Curse</div>
+                    <div class="state-icon">🛡️</div>
+                    <div class="state-title">Sigil Rejected</div>
+                    <div class="state-sub">The old blood refused the connection. Kindle the flame and offer your sigil anew.</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Rekindle Flame</button>
                 </div>
             \`;
         }
@@ -414,7 +439,7 @@ export const getDashboardHtml = () => `
         }
 
         async function stopEngine() {
-            if (!confirm('Disconnect WhatsApp?\\nYou will need to scan the QR code again to reconnect.')) return;
+            if (!confirm('Sever the connection?\\nYou will need to offer your sigil again to return.')) return;
             await fetch('/api/session', { method: 'DELETE', headers: API_HEADERS });
             await update();
         }
@@ -424,7 +449,7 @@ export const getDashboardHtml = () => `
             const btn   = document.getElementById('send-btn');
             const msg   = input?.value.trim();
             if (!msg) return;
-            btn.textContent = 'Sending\u2026';
+            btn.textContent = 'Invoking...';
             btn.disabled = true;
             try {
                 await fetch('/api/sendText', {
@@ -434,7 +459,7 @@ export const getDashboardHtml = () => `
                 });
             } finally {
                 if (input) input.value = '';
-                if (btn) { btn.textContent = 'Send'; btn.disabled = false; }
+                if (btn) { btn.textContent = 'Invoke'; btn.disabled = false; }
             }
         }
 
@@ -451,7 +476,7 @@ export const getDashboardHtml = () => `
                 else if (status === 'AUTH_FAILED') renderAuthFailed();
                 else                               renderOffline(data.session?.reason);
             } catch (e) {
-                console.error('Dashboard poll failed', e);
+                console.error('The abyss stares back (poll failed)', e);
             }
         }
 

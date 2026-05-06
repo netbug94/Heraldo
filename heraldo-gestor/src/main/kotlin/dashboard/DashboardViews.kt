@@ -6,10 +6,10 @@ internal object DashboardViews {
 
     fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
         val taskListHtml = tasks.joinToString("") { task ->
-            // Keep status text clear and simple, but use cool emojis
+            // Dark Souls thematic statuses
             val (statusClass, statusText, icon) = when {
-                task.mensajeroDone -> Triple("sent", "Sent", "📜")
-                else -> Triple("waiting", "Pending", "⏳")
+                task.mensajeroDone -> Triple("sent", "Fulfilled", "🔥")
+                else -> Triple("waiting", "Awaiting", "🌑")
             }
             """
             <li class="task-item">
@@ -23,7 +23,7 @@ internal object DashboardViews {
         }
 
         val finalList = if (tasks.isEmpty()) {
-            """<div class="empty-state">🕸️ No tasks scheduled for today.</div>"""
+            """<div class="empty-state">The fire fades... No souls to gather today.</div>"""
         } else {
             taskListHtml
         }
@@ -32,10 +32,10 @@ internal object DashboardViews {
             """
             <div class="auth-banner">
                 <div class="auth-banner-text">
-                    <h3>🚨 Google Auth Required</h3>
-                    <p>Background sync is paused. Please grant Google Authorization to resume.</p>
+                    <h3>The Covenant is Broken</h3>
+                    <p>Background sync is severed. Offer your sigil (Google Auth) to restore the link.</p>
                 </div>
-                <a href="$authLink" target="_blank" class="btn-auth">Authorize Google</a>
+                <a href="$authLink" target="_blank" class="btn-auth">Restore Covenant</a>
             </div>
             """
         } else ""
@@ -46,12 +46,12 @@ internal object DashboardViews {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Heraldo Gestor Dashboard</title>
+                <title>Heraldo Gestor - The Abyss</title>
                 <meta http-equiv="refresh" content="30">
-                <!-- Medieval Typography -->
+                <!-- Gothic Typography -->
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
                 <!-- External Stylesheet -->
                 <link rel="stylesheet" href="/static/styles.css">
             </head>
@@ -59,16 +59,16 @@ internal object DashboardViews {
                 <div class="container">
                     <div class="header">
                         <div>
-                            <h1>🏰 Heraldo Gestor</h1>
+                            <h1>Heraldo Gestor</h1>
                             <div class="stats">
-                                Tracking ${tasks.size} active missives for today<br>
-                                <div class="zone-badge">🌍 Timezone: $currentZone ($formattedTime)</div>
+                                Bearing ${tasks.size} lingering souls today<br>
+                                <div class="zone-badge">Realm: $currentZone ($formattedTime)</div>
                             </div>
                         </div>
                         <div class="btn-group">
-                            <button onclick="openTemplateModal()" class="btn btn-secondary">Edit Template</button>
-                            <a href="/sync-zone" class="btn btn-secondary">Sync Time</a>
-                            <a href="/sync" class="btn">Refresh Tasks</a>
+                            <button onclick="openTemplateModal()" class="btn btn-secondary">Forge Decree</button>
+                            <a href="/sync-zone" class="btn btn-secondary">Align Abyss</a>
+                            <a href="/sync" class="btn">Stoke the Flame</a>
                         </div>
                     </div>
                     
@@ -79,17 +79,17 @@ internal object DashboardViews {
                     </ul>
                 </div>
                 
-                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend">▲</button>
 
-                <!-- Custom Medieval Modal -->
+                <!-- Gothic Modal -->
                 <div id="medieval-modal" class="modal-overlay">
                     <div class="modal-content">
-                        <h3 id="modal-title">Edit Message Template</h3>
+                        <h3 id="modal-title">Forge New Decree</h3>
                         <p id="modal-message"></p>
-                        <input type="text" id="modal-input" placeholder="Enter template variables..." autocomplete="off">
+                        <input type="text" id="modal-input" placeholder="Inscribe your will..." autocomplete="off">
                         <div class="modal-actions">
-                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                            <button class="btn" onclick="confirmModal()">Save Template</button>
+                            <button class="btn btn-secondary" onclick="closeModal()">Abandon</button>
+                            <button class="btn" onclick="confirmModal()">Inscribe</button>
                         </div>
                     </div>
                 </div>
@@ -110,7 +110,7 @@ internal object DashboardViews {
                         btn.classList.toggle('visible', window.scrollY > 200);
                     }, { passive: true });
 
-                    // Custom Modal Logic (replaces prompt/alert)
+                    // Custom Modal Logic
                     let modalCallback = null;
 
                     function showModal(title, message, isPrompt, callback) {
@@ -148,9 +148,9 @@ internal object DashboardViews {
                     }
 
                     function openTemplateModal() {
-                        showModal("Edit Message Template", "Enter the new text template for WhatsApp messages:", true, function(newTemplate) {
+                        showModal("Forge New Decree", "Inscribe the words to be carried by the phantoms:", true, function(newTemplate) {
                             if (newTemplate) {
-                                document.body.innerHTML = '<div style="background:#e8dfca; color:#2c241b; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif;"><h2>Drafting Decree...</h2></div>';
+                                document.body.innerHTML = '<div style="background:#050505; color:#c87a2a; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif; letter-spacing: 6px; text-transform: uppercase;"><h2 style="font-weight: 400; text-shadow: 0 0 20px rgba(200, 122, 42, 0.4);">Inscribing Decree...</h2></div>';
                                 fetch('/sync-env', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
@@ -158,7 +158,7 @@ internal object DashboardViews {
                                 }).then(() => {
                                     window.location.href = '/';
                                 }).catch(err => {
-                                    showModal("Error", "Failed to update template: " + err, false, function() {
+                                    showModal("Curse", "The inscription failed: " + err, false, function() {
                                         window.location.reload();
                                     });
                                 });
@@ -171,13 +171,13 @@ internal object DashboardViews {
         """.trimIndent()
     }
 
-    // This interceptor fixes the texts sent from the backend routes
+    // Cinematic "YOU DIED" / "BONFIRE LIT" style loading screens
     fun renderLoadingState(message: String): String {
-        val clearMessage = when(message) {
-            "Summoning Decrees..." -> "Refreshing Tasks..."
-            "Aligning Astrolabe..." -> "Updating Timezone..."
-            "The Ravens have been Dispatched!" -> "Template Updated!"
-            else -> message
+        val (clearMessage, colorClass) = when(message) {
+            "Summoning Decrees..." -> "SUMMONING PHANTOMS" to "#c87a2a" // Bonfire Gold
+            "Aligning Astrolabe..." -> "ALIGNING THE ABYSS" to "#8a867e" // Ash Gray
+            "The Ravens have been Dispatched!" -> "DECREE FORGED" to "#7a1a1a" // Blood Red
+            else -> message.uppercase() to "#c87a2a"
         }
 
         return """
@@ -186,17 +186,23 @@ internal object DashboardViews {
             <head>
                 <meta charset="UTF-8">
                 <meta http-equiv="refresh" content="1.5;url=/" />
-                <title>Heraldo Gestor - Working...</title>
+                <title>Heraldo Gestor - Traversing the Fog...</title>
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400&display=swap" rel="stylesheet">
             </head>
-            <body style="background:#e8dfca; background-image: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.05) 100%); color:#2c241b; font-family:'Cinzel', serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
-                <h2 style="color: #2c241b; font-weight:700; border: 1px solid #c4b59d; padding: 20px 40px; background: #f4ecd8; box-shadow: 0 4px 15px rgba(0,0,0,0.06); position: relative;">
-                    <div style="content: ''; position: absolute; width: 10px; height: 10px; border: 1px solid #c4b59d; top: 4px; left: 4px; border-right: none; border-bottom: none;"></div>
-                    <div style="content: ''; position: absolute; width: 10px; height: 10px; border: 1px solid #c4b59d; bottom: 4px; right: 4px; border-left: none; border-top: none;"></div>
+            <body style="background:#000000; color:$colorClass; font-family:'Cinzel', serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; overflow: hidden;">
+                <h2 style="font-weight:400; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 12px; text-align: center; text-shadow: 0 0 30px $colorClass; opacity: 0; animation: fadeInOut 1.5s ease-in-out forwards;">
                     $clearMessage
                 </h2>
+                <style>
+                    @keyframes fadeInOut {
+                        0% { opacity: 0; transform: scale(0.98); }
+                        40% { opacity: 1; transform: scale(1); }
+                        80% { opacity: 1; transform: scale(1); }
+                        100% { opacity: 0; transform: scale(1.02); }
+                    }
+                </style>
             </body>
             </html>
         """.trimIndent()
