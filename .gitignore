@@ -1,18 +1,38 @@
-node_modules/
-**/node_modules/
+# ============================================================
+# OS & IDE Artifacts
+# ============================================================
+.DS_Store
+**/.DS_Store
 .idea/
-.gradle/
+.vscode/
+*.iml
+
+# ============================================================
+# Heraldo Gestor (Kotlin / Gradle)
+# ============================================================
 **/build/
+**/.gradle/
+**/.kotlin/
+heraldo-gestor/data/
+local.properties
+
+# ============================================================
+# Heraldo Mensajero (Node.js / TypeScript)
+# ============================================================
+**/node_modules/
 **/dist/
-*.log
 **/sessions/
 **/.local-chromium/
-TaskBrainDaemon/local.properties
+*.log
 
-# Google API Credentials & Tokens
-TaskBrainDaemon/config/
-TaskBrainDaemon/tokens/
+# ============================================================
+# Google API Credentials & Auth Tokens  ← SENSITIVE
+# ============================================================
+**/config/
+**/tokens/
 credentials.json
 
-# Environment Variables
+# ============================================================
+# Environment Variables  ← SENSITIVE
+# ============================================================
 .env
