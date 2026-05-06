@@ -1,0 +1,36 @@
+services:
+  relay:
+    build:
+      context: ./TaskRelayDaemon
+    container_name: task-relay
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./TaskRelayDaemon/sessions:/app/sessions
+    env_file:
+      - .env
+    networks:
+      - task-network
+    restart: unless-stopped
+
+  brain:
+    build:
+      context: ./TaskBrainDaemon
+    container_name: task-brain
+    ports:
+      - "8080:8080"   # API
+      - "8888:8888"   # Google Auth Callback
+    volumes:
+      - ./TaskBrainDaemon/config:/app/config
+      - ./TaskBrainDaemon/tokens:/app/tokens
+    env_file:
+      - .env
+    networks:
+      - task-network
+    depends_on:
+      - relay
+    restart: unless-stopped
+
+networks:
+  task-network:
+    driver: bridge
