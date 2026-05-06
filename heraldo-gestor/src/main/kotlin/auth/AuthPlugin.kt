@@ -6,12 +6,15 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlin.time.Duration.Companion.days
 
+import kotlinx.serialization.Serializable
+
 // ── Session data class ────────────────────────────────────────────────────────
 
 /**
  * The data stored inside the signed cookie. Just a token string — the
  * server validates it against [HeraldoSessionStore].
  */
+@Serializable
 data class HeraldoSession(val token: String)
 
 // ── In-memory token store ─────────────────────────────────────────────────────
