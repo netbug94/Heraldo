@@ -1,8 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { WhatsAppManager } from './WhatsAppManager.js';
 import { getDashboardHtml } from './dashboard.js';
 import { logger } from './logger.js';
+import { requireAuth, handleLoginGet, handleLoginPost, handleLogout } from './auth.js';
 
 // Load environment variables from system or .env file
 dotenv.config();
@@ -18,6 +20,8 @@ if (!API_KEY) {
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Needed for login form POST
+app.use(cookieParser());
 
 const wa = new WhatsAppManager();
 
@@ -40,8 +44,17 @@ app.use('/api', (req, res, next) => {
 // ROUTES
 // ==========================================
 
-// UI Dashboard
-app.get('/', (_req, res) => res.send(getDashboardHtml()));
+// ==========================================
+// AUTH ROUTES (public — no auth required)
+// ==========================================
+app.get('/login', handleLoginGet);
+app.post('/login', handleLoginPost);
+app.get('/logout', handleLogout);
+
+// ==========================================
+// UI Dashboard (protected)
+// ==========================================
+app.get('/', requireAuth, (_req, res) => res.send(getDashboardHtml()));
 
 // Internal Status API
 app.get('/api/status', (_req, res) => {

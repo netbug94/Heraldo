@@ -1,5 +1,7 @@
 package com.netbug94
 
+import com.netbug94.auth.authRoutes
+import com.netbug94.auth.installAuth
 import com.netbug94.core.appModule
 import com.netbug94.reminders.TaskDispatcher
 import com.netbug94.dashboard.dashboardRoutes // Make sure this is imported!
@@ -54,6 +56,10 @@ fun Application.module() {
         maxFrameSize = Long.MAX_VALUE
         masking = false
     }
+
+    // Auth: install Sessions plugin + register /login, /logout
+    installAuth()
+    authRoutes()
 
     routing {
         staticResources("/static", "static")

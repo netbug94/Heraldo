@@ -26,6 +26,7 @@ dependencies {
     implementation(ktorLibs.server.cio)
     implementation(ktorLibs.server.callLogging)
     implementation(ktorLibs.server.contentNegotiation)
+    implementation(ktorLibs.server.sessions)
     implementation(ktorLibs.server.websockets)
     implementation(ktorLibs.serialization.kotlinx.json)
 
