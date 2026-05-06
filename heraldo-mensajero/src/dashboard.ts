@@ -23,35 +23,36 @@ export const getDashboardHtml = () => `
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:       #1a1614;
-            --surface:  #1e1917;
-            --primary:  #8c1c1c;
-            --primary-hover: #b71c1c;
-            --text:     #d8cbb5;
-            --muted:    #a89f91;
-            --success:  #388e3c;
-            --warning:  #d4af37;
-            --danger:   #b71c1c;
-            --border:   #8b7355;
-            --secondary:#3a322b;
-            --gold:     #d4af37;
+            /* Parchment & Ink Theme */
+            --bg:       #e8dfca; /* Darker parchment backdrop */
+            --surface:  #f4ecd8; /* Lighter vellum for cards */
+            --primary:  #8b2635; /* Wax seal red */
+            --primary-hover: #6e1c28;
+            --text:     #2c241b; /* Iron gall ink */
+            --muted:    #5c5346; /* Faded ink */
+            --success:  #3a5a40; /* Muted forest green */
+            --warning:  #967230; /* Antiqued gold/brass */
+            --danger:   #8b2635; 
+            --border:   #c4b59d; /* Faint ink line */
+            --gold:     #7a5c24; /* Muted matte gold */
         }
 
         body {
             font-family: 'Cormorant Garamond', serif;
             background-color: var(--bg);
-            background-image: radial-gradient(circle at center, #2a2420 0%, #0d0b0a 100%);
             color: var(--text);
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 2rem 1rem 3rem;
+            /* Subtle paper texture illusion using radial gradient */
+            background-image: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.05) 100%);
         }
 
         /* ── Header ── */
@@ -60,19 +61,20 @@ export const getDashboardHtml = () => `
             max-width: 480px;
             margin-bottom: 1.75rem;
             padding-bottom: 1.5rem;
-            border-bottom: 2px dashed var(--border);
+            border-bottom: 1px solid var(--border);
             text-align: center;
         }
         .page-header h1 {
             font-family: 'Cinzel', serif;
             font-size: clamp(1.6rem, 5vw, 2.2rem);
-            color: var(--gold);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            color: var(--text);
+            font-weight: 700;
             margin-bottom: 0.3rem;
+            letter-spacing: 0.02em;
         }
         .page-header p {
             color: var(--muted);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-style: italic;
         }
 
@@ -80,7 +82,7 @@ export const getDashboardHtml = () => `
         .engine-status {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
             font-family: 'Cinzel', serif;
             font-size: 0.85rem;
             font-weight: 600;
@@ -88,34 +90,40 @@ export const getDashboardHtml = () => `
             letter-spacing: 0.04em;
             text-transform: uppercase;
             margin-bottom: 1.25rem;
-            background: rgba(0,0,0,0.4);
             padding: 6px 16px;
             border: 1px solid var(--border);
-            border-radius: 4px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            background: rgba(255, 255, 255, 0.3);
         }
         .engine-dot {
-            width: 10px; height: 10px;
+            width: 8px; height: 8px;
             border-radius: 50%;
-            background: var(--secondary);
+            background: var(--muted);
             flex-shrink: 0;
-            border: 1px solid #000;
         }
-        .dot-online   { background: var(--success); box-shadow: 0 0 8px var(--success); }
-        .dot-offline  { background: var(--danger);  box-shadow: 0 0 8px var(--danger); }
-        .dot-starting { background: var(--gold);    box-shadow: 0 0 8px var(--gold); animation: blink 1s infinite; }
-        .dot-qr       { background: var(--gold);    box-shadow: 0 0 8px var(--gold); animation: blink 1s infinite; }
+        .dot-online   { background: var(--success); }
+        .dot-offline  { background: var(--danger); }
+        .dot-starting { background: var(--warning); animation: blink 1.5s infinite; }
+        .dot-qr       { background: var(--warning); animation: blink 1.5s infinite; }
 
         /* ── Main card ── */
         .card {
             width: 100%;
             max-width: 480px;
             background: var(--surface);
-            border: 3px double var(--border);
-            border-radius: 4px;
-            padding: 2rem 1.75rem;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
+            position: relative;
         }
+        /* Corner flourishes using pseudo-elements */
+        .card::before, .card::after {
+            content: '';
+            position: absolute;
+            width: 15px; height: 15px;
+            border: 1px solid var(--border);
+        }
+        .card::before { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+        .card::after  { bottom: 6px; right: 6px; border-left: none; border-top: none; }
 
         /* ── State views ── */
         .state-view {
@@ -124,9 +132,9 @@ export const getDashboardHtml = () => `
             align-items: center;
             text-align: center;
         }
-        .state-icon   { font-size: 3rem; margin-bottom: 1rem; line-height: 1; text-shadow: 2px 2px 5px #000; }
-        .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--gold); }
-        .state-sub    { color: var(--muted); font-size: 1.1rem; line-height: 1.6; max-width: 300px; margin-bottom: 1.75rem; }
+        .state-icon   { font-size: 2.5rem; margin-bottom: 1rem; line-height: 1; filter: grayscale(20%) opacity(0.9); }
+        .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+        .state-sub    { color: var(--muted); font-size: 1.15rem; line-height: 1.6; max-width: 300px; margin-bottom: 1.75rem; }
 
         /* ── Status badge ── */
         .status-badge {
@@ -139,40 +147,37 @@ export const getDashboardHtml = () => `
             font-weight: 700;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            border: 1px solid currentColor;
             margin-bottom: 1.5rem;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
+            border-bottom: 2px solid currentColor;
         }
-        .badge-online   { color: #a5d6a7; background: #1a2e1e; border-color: #388e3c; }
-        .badge-offline  { color: #ff8a80; background: #3e1515; border-color: #b71c1c; }
-        .badge-starting { color: #ffe082; background: #3e2713; border-color: #f57f17; animation: blink 1s infinite; }
-        .badge-qr       { color: #ffe082; background: #3e2713; border-color: #f57f17; animation: blink 1s infinite; }
+        .badge-online   { color: var(--success); }
+        .badge-offline  { color: var(--danger); }
+        .badge-starting { color: var(--warning); animation: blink 1.5s infinite; }
+        .badge-qr       { color: var(--warning); animation: blink 1.5s infinite; }
 
         /* ── Connected box ── */
         .connected-box {
             width: 100%;
-            background: #25201c;
+            background: rgba(0,0,0,0.02);
             border: 1px solid var(--border);
-            border-left: 4px solid var(--success);
+            border-left: 3px solid var(--success);
             padding: 1.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            margin-bottom: 1.5rem;
         }
-        .connected-box .icon { font-size: 2rem; margin-bottom: 0.75rem; }
-        .connected-box h3 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.1rem; margin-bottom: 0.3rem; }
-        .connected-box p  { color: var(--muted); font-size: 1rem; }
+        .connected-box .icon { font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.8; }
+        .connected-box h3 { font-family: 'Cinzel', serif; color: var(--text); font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .connected-box p  { color: var(--muted); font-size: 1.05rem; }
 
         /* ── QR wrapper ── */
         .qr-wrapper {
             background: #ffffff;
-            border: 4px solid var(--border);
+            border: 1px solid var(--border);
             padding: 14px;
             margin-bottom: 1rem;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
         .qr-hint {
             font-family: 'Cinzel', serif;
-            color: var(--gold);
+            color: var(--muted);
             font-size: 0.85rem;
             letter-spacing: 0.05em;
             text-transform: uppercase;
@@ -180,14 +185,15 @@ export const getDashboardHtml = () => `
             margin-bottom: 1.5rem;
         }
 
-        /* ── Spinner (Medieval Sun/Astrolabe vibe) ── */
+        /* ── Spinner (Simple Astrolabe Ring) ── */
         .spinner {
-            width: 52px; height: 52px;
-            border: 3px dashed var(--gold);
+            width: 48px; height: 48px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--text);
+            border-right: 2px solid var(--text);
             border-radius: 50%;
-            animation: spin 3s linear infinite;
+            animation: spin 1.5s linear infinite;
             margin-bottom: 1.25rem;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
         }
 
         /* ── Buttons ── */
@@ -196,70 +202,69 @@ export const getDashboardHtml = () => `
             padding: 0.85rem 1.25rem;
             font-family: 'Cinzel', serif;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             cursor: pointer;
-            border: 1px solid var(--gold);
             transition: all 0.2s ease;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+            background: transparent;
         }
         .btn + .btn { margin-top: 0.75rem; }
         .btn-primary {
-            background: linear-gradient(to bottom, #4a1c1c, #2a0b0b);
-            color: #e6dfd1;
+            background: var(--primary);
+            color: #f4ecd8;
+            border: 1px solid var(--primary);
         }
         .btn-primary:hover { 
-            background: linear-gradient(to bottom, #5c2323, #3a0f0f);
-            color: #fff;
-            transform: translateY(-1px); 
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
         .btn-danger {
-            background: linear-gradient(to bottom, #3a322b, #1f1b17);
-            color: #c29b62;
-            border-color: var(--border);
+            color: var(--danger);
+            border: 1px solid var(--border);
         }
         .btn-danger:hover { 
-            background: linear-gradient(to bottom, #4a4037, #2a2520);
-            color: var(--gold); 
+            background: rgba(139, 38, 53, 0.05);
+            border-color: var(--danger);
         }
 
         /* ── Test message row ── */
         .send-row {
             display: flex;
-            gap: 0.6rem;
+            gap: 0.5rem;
             width: 100%;
             margin-bottom: 1rem;
         }
         .send-row input {
             flex: 1;
-            background: #2a2420;
+            background: transparent;
             border: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
             padding: 0.7rem 0.9rem;
             color: var(--text);
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             outline: none;
             transition: border-color 0.2s;
             min-width: 0;
         }
-        .send-row input:focus { border-color: var(--gold); }
-        .send-row input::placeholder { color: var(--secondary); font-style: italic; }
+        .send-row input:focus { border-color: var(--text); }
+        .send-row input::placeholder { color: var(--muted); font-style: italic; }
         .send-row button {
-            background: linear-gradient(to bottom, #4a1c1c, #2a0b0b);
-            color: #e6dfd1;
-            border: 1px solid var(--gold);
+            background: var(--text);
+            color: var(--surface);
+            border: 1px solid var(--text);
             padding: 0.7rem 1.1rem;
             font-family: 'Cinzel', serif;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
-            transition: filter 0.2s;
+            transition: background 0.2s;
             flex-shrink: 0;
             text-transform: uppercase;
         }
-        .send-row button:hover { filter: brightness(1.2); }
+        .send-row button:hover { background: #1a1510; }
         .send-row button:disabled { opacity: 0.5; cursor: default; }
 
         /* ── Footer ── */
@@ -273,7 +278,7 @@ export const getDashboardHtml = () => `
         }
 
         @keyframes spin  { to { transform: rotate(360deg); } }
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
     </style>
 </head>
 <body>
@@ -342,7 +347,7 @@ export const getDashboardHtml = () => `
                     <div class="status-badge badge-starting">&bull; Starting</div>
                     <div class="spinner"></div>
                     <div class="state-title">Booting Chromium...</div>
-                    <div class="state-sub">This takes a few seconds. The QR code will appear shortly.</div>
+                    <div class="state-sub">This takes a few moments. The QR cipher will appear shortly.</div>
                 </div>
             \`;
         }
@@ -362,7 +367,7 @@ export const getDashboardHtml = () => `
                 if (el && qrCode) {
                     new QRCode(el, {
                         text: qrCode, width: 220, height: 220,
-                        colorDark: '#1a1614', /* Dark brown instead of black for theme matching */
+                        colorDark: '#2c241b', /* Matching the Iron gall ink text color */
                         colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.L
                     });
@@ -381,10 +386,10 @@ export const getDashboardHtml = () => `
                         <p>Ready to receive and deliver tasks from Heraldo Gestor.</p>
                     </div>
                     <div class="send-row">
-                        <input id="test-msg" type="text" placeholder="Test message text..." />
+                        <input id="test-msg" type="text" placeholder="Draft a missive..." />
                         <button id="send-btn" onclick="sendTest()">Send</button>
                     </div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Stop & Disconnect</button>
+                    <button class="btn btn-danger" onclick="stopEngine()">Sever Connection</button>
                 </div>
             \`;
         }
@@ -396,7 +401,7 @@ export const getDashboardHtml = () => `
                     <div class="status-badge badge-offline">&bull; Auth Failed</div>
                     <div class="state-icon">🚩</div>
                     <div class="state-title">Authentication Failed</div>
-                    <div class="state-sub">WhatsApp rejected the session. Restart the engine and scan the QR code again.</div>
+                    <div class="state-sub">WhatsApp rejected the session. Restart the engine and scan the QR code anew.</div>
                     <button class="btn btn-primary" onclick="startEngine()">Restart Engine</button>
                 </div>
             \`;
