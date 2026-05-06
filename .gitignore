@@ -1,0 +1,18 @@
+node_modules/
+**/node_modules/
+.idea/
+.gradle/
+**/build/
+**/dist/
+*.log
+**/sessions/
+**/.local-chromium/
+TaskBrainDaemon/local.properties
+
+# Google API Credentials & Tokens
+TaskBrainDaemon/config/
+TaskBrainDaemon/tokens/
+credentials.json
+
+# Environment Variables
+.env
