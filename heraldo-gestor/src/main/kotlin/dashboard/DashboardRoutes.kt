@@ -32,6 +32,36 @@ fun Application.dashboardRoutes() {
     val googleTasksClient by inject<GoogleTasksClient>()
 
     routing {
+        get("/Callback") {
+            val code = call.request.queryParameters["code"]
+            val error = call.request.queryParameters["error"]
+            val state = call.request.queryParameters["state"]
+
+            if (error != null) {
+                val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
+                return@get call.respondText(html, ContentType.Text.Html)
+            }
+
+            if (code == null || state == null) {
+                val html = DashboardViews.renderLoadingState("❌ Authorization failed: Missing code or state.")
+                return@get call.respondText(html, ContentType.Text.Html)
+            }
+
+            if (state != googleTasksClient.expectedState) {
+                val html = DashboardViews.renderLoadingState("❌ Authorization failed: CSRF state mismatch!")
+                return@get call.respondText(html, ContentType.Text.Html)
+            }
+
+            try {
+                googleTasksClient.exchangeCode(code)
+                val html = DashboardViews.renderLoadingState("✅ Royal Seal Accepted! You may close this parchment.")
+                call.respondText(html, ContentType.Text.Html)
+            } catch (e: Exception) {
+                val html = DashboardViews.renderLoadingState("❌ The Seal was rejected: ${e.message}")
+                call.respondText(html, ContentType.Text.Html)
+            }
+        }
+
         requireAuth {
             get("/") {
                 call.response.header(HttpHeaders.CacheControl, "no-cache, no-store, must-revalidate")
@@ -45,36 +75,6 @@ fun Application.dashboardRoutes() {
 
                 val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
                 call.respondText(html, ContentType.Text.Html)
-            }
-
-            get("/Callback") {
-                val code = call.request.queryParameters["code"]
-                val error = call.request.queryParameters["error"]
-                val state = call.request.queryParameters["state"]
-
-                if (error != null) {
-                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
-                    return@get call.respondText(html, ContentType.Text.Html)
-                }
-
-                if (code == null || state == null) {
-                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: Missing code or state.")
-                    return@get call.respondText(html, ContentType.Text.Html)
-                }
-
-                if (state != googleTasksClient.expectedState) {
-                    val html = DashboardViews.renderLoadingState("❌ Authorization failed: CSRF state mismatch!")
-                    return@get call.respondText(html, ContentType.Text.Html)
-                }
-
-                try {
-                    googleTasksClient.exchangeCode(code)
-                    val html = DashboardViews.renderLoadingState("✅ Royal Seal Accepted! You may close this parchment.")
-                    call.respondText(html, ContentType.Text.Html)
-                } catch (e: Exception) {
-                    val html = DashboardViews.renderLoadingState("❌ The Seal was rejected: ${e.message}")
-                    call.respondText(html, ContentType.Text.Html)
-                }
             }
 
             get("/sync") {
