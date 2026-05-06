@@ -1,4 +1,6 @@
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import pkg from 'whatsapp-web.js';
+const { Client, LocalAuth } = pkg;
+type WAClient = InstanceType<typeof Client>;
 import qrcode from 'qrcode-terminal';
 import fs from 'fs';
 import path from 'path';
@@ -12,7 +14,7 @@ const __dirname = path.dirname(__filename);
 const SESSIONS_DIR = path.join(__dirname, '../sessions');
 
 export class WhatsAppManager {
-    private client: Client | null = null;
+    private client: WAClient | null = null;
     public sessionState: any = { status: 'OFFLINE' };
 
     constructor() {
@@ -60,7 +62,7 @@ export class WhatsAppManager {
         client.on('disconnected', (reason) => {
             logger.error(`❌ Disconnected. Reason: ${reason}`);
             this.sessionState = { status: 'OFFLINE', reason };
-            client.destroy().catch(e => logger.error(`Cleanup failed: ${e}`));
+            client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
             this.client = null;
         });
 
@@ -96,7 +98,7 @@ export class WhatsAppManager {
     async stop() {
         if (this.client) {
             logger.warn(`🛑 Stopping WhatsApp client gracefully...`);
-            await this.client.destroy().catch(e => logger.error(`Cleanup failed: ${e}`));
+            await this.client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
             this.client = null;
         }
         this.sessionState = { status: 'OFFLINE', reason: 'Graceful Shutdown' };
@@ -105,7 +107,7 @@ export class WhatsAppManager {
     async deleteAccount() {
         if (this.client) {
             logger.warn(`💀 Killing primary session`);
-            await this.client.destroy().catch(e => logger.error(`Cleanup failed: ${e}`));
+            await this.client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
             this.client = null;
         }
         this.sessionState = { status: 'OFFLINE', reason: 'Killed via Dashboard' };

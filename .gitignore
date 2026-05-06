@@ -28,7 +28,8 @@ local.properties
 # ============================================================
 # Google API Credentials & Auth Tokens  ← SENSITIVE
 # ============================================================
-**/config/
+**/config/*
+!**/config/.gitkeep
 **/tokens/
 credentials.json
 
