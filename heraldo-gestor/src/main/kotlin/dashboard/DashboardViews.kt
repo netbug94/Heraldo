@@ -31,10 +31,12 @@ internal object DashboardViews {
         // --- NEW: Dynamic Banner HTML ---
         val authBannerHtml = if (authLink != null) {
             """
-            <div style="background-color: #ef4444; color: #ffffff; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: center; border: 2px solid #b91c1c;">
-                <h3 style="margin-top: 0;">🚨 Google Authentication Required 🚨</h3>
-                <p>Background sync is paused. Please authorize the app to continue (make sure your SSH tunnel is active).</p>
-                <a href="$authLink" target="_blank" style="display: inline-block; background: #ffffff; color: #ef4444; padding: 10px 20px; font-weight: bold; text-decoration: none; border-radius: 4px; margin-top: 10px;">Login with Google</a>
+            <div class="auth-banner">
+                <div class="auth-banner-text">
+                    <h3>🚨 Google Authentication Required</h3>
+                    <p>Background sync is paused. Authorize to resume (ensure your SSH tunnel is active).</p>
+                </div>
+                <a href="$authLink" target="_blank" class="btn-auth">Login with Google</a>
             </div>
             """
         } else ""
