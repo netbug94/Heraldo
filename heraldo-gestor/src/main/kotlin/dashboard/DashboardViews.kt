@@ -6,9 +6,10 @@ internal object DashboardViews {
 
     fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
         val taskListHtml = tasks.joinToString("") { task ->
+            // Keep status text clear and simple, but use cool emojis
             val (statusClass, statusText, icon) = when {
-                task.mensajeroDone -> Triple("sent", "Dispatched", "📜")
-                else -> Triple("waiting", "Awaiting", "⏳")
+                task.mensajeroDone -> Triple("sent", "Sent", "📜")
+                else -> Triple("waiting", "Pending", "⏳")
             }
             """
             <li class="task-item">
@@ -22,7 +23,7 @@ internal object DashboardViews {
         }
 
         val finalList = if (tasks.isEmpty()) {
-            """<div class="empty-state">🕸️ No decrees bear thy name this day.</div>"""
+            """<div class="empty-state">🕸️ No tasks scheduled for today.</div>"""
         } else {
             taskListHtml
         }
@@ -31,10 +32,10 @@ internal object DashboardViews {
             """
             <div class="auth-banner">
                 <div class="auth-banner-text">
-                    <h3>🚨 Royal Seal Required</h3>
-                    <p>The couriers are halted. Grant Google Authorization to resume thy background sync (ensure the magical SSH tunnel remains open).</p>
+                    <h3>🚨 Google Auth Required</h3>
+                    <p>Background sync is paused. Please grant Google Authorization to resume.</p>
                 </div>
-                <a href="$authLink" target="_blank" class="btn-auth">Sign the Decree (Login)</a>
+                <a href="$authLink" target="_blank" class="btn-auth">Authorize Google</a>
             </div>
             """
         } else ""
@@ -50,7 +51,7 @@ internal object DashboardViews {
                 <!-- Medieval Typography -->
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
                 <!-- External Stylesheet -->
                 <link rel="stylesheet" href="/static/styles.css">
             </head>
@@ -60,14 +61,14 @@ internal object DashboardViews {
                         <div>
                             <h1>🏰 Heraldo Gestor</h1>
                             <div class="stats">
-                                Overseeing ${tasks.size} active commands for this day<br>
-                                <div class="zone-badge">🌍 Realm: $currentZone ($formattedTime)</div>
+                                Tracking ${tasks.size} active missives for today<br>
+                                <div class="zone-badge">🌍 Timezone: $currentZone ($formattedTime)</div>
                             </div>
                         </div>
                         <div class="btn-group">
-                            <button onclick="openTemplateModal()" class="btn btn-secondary">Draft New Seal</button>
-                            <a href="/sync-zone" class="btn btn-secondary">Align Astrolabe</a>
-                            <a href="/sync" class="btn">Summon Tasks</a>
+                            <button onclick="openTemplateModal()" class="btn btn-secondary">Edit Template</button>
+                            <a href="/sync-zone" class="btn btn-secondary">Sync Time</a>
+                            <a href="/sync" class="btn">Refresh Tasks</a>
                         </div>
                     </div>
                     
@@ -78,17 +79,17 @@ internal object DashboardViews {
                     </ul>
                 </div>
                 
-                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend">↑</button>
+                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
 
                 <!-- Custom Medieval Modal -->
                 <div id="medieval-modal" class="modal-overlay">
                     <div class="modal-content">
-                        <h3 id="modal-title">Royal Decree</h3>
+                        <h3 id="modal-title">Edit Message Template</h3>
                         <p id="modal-message"></p>
-                        <input type="text" id="modal-input" placeholder="Enter thy words..." autocomplete="off">
+                        <input type="text" id="modal-input" placeholder="Enter template variables..." autocomplete="off">
                         <div class="modal-actions">
-                            <button class="btn btn-secondary" onclick="closeModal()">Abandon</button>
-                            <button class="btn" onclick="confirmModal()">Seal it</button>
+                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button class="btn" onclick="confirmModal()">Save Template</button>
                         </div>
                     </div>
                 </div>
@@ -147,9 +148,9 @@ internal object DashboardViews {
                     }
 
                     function openTemplateModal() {
-                        showModal("Draft New Seal", "Enter the new wording for the royal relay:", true, function(newTemplate) {
+                        showModal("Edit Message Template", "Enter the new text template for WhatsApp messages:", true, function(newTemplate) {
                             if (newTemplate) {
-                                document.body.innerHTML = '<div style="background:#1a1614; color:#d4af37; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif;"><h2>Dispatching ravens...</h2></div>';
+                                document.body.innerHTML = '<div style="background:#e8dfca; color:#2c241b; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif;"><h2>Drafting Decree...</h2></div>';
                                 fetch('/sync-env', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
@@ -157,7 +158,7 @@ internal object DashboardViews {
                                 }).then(() => {
                                     window.location.href = '/';
                                 }).catch(err => {
-                                    showModal("Failure", "The ravens failed to depart: " + err, false, function() {
+                                    showModal("Error", "Failed to update template: " + err, false, function() {
                                         window.location.reload();
                                     });
                                 });
@@ -170,7 +171,15 @@ internal object DashboardViews {
         """.trimIndent()
     }
 
+    // This interceptor fixes the texts sent from the backend routes
     fun renderLoadingState(message: String): String {
+        val clearMessage = when(message) {
+            "Summoning Decrees..." -> "Refreshing Tasks..."
+            "Aligning Astrolabe..." -> "Updating Timezone..."
+            "The Ravens have been Dispatched!" -> "Template Updated!"
+            else -> message
+        }
+
         return """
             <!DOCTYPE html>
             <html lang="en">
@@ -182,8 +191,12 @@ internal object DashboardViews {
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
             </head>
-            <body style="background:#1a1614; background-image: radial-gradient(circle at center, #2a2420 0%, #0d0b0a 100%); color:#d8cbb5; font-family:'Cinzel', serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
-                <h2 style="color: #d4af37; text-shadow: 2px 2px 4px #000; border: 2px solid #8b7355; padding: 20px 40px; background: #1e1917; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">$message</h2>
+            <body style="background:#e8dfca; background-image: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.05) 100%); color:#2c241b; font-family:'Cinzel', serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
+                <h2 style="color: #2c241b; font-weight:700; border: 1px solid #c4b59d; padding: 20px 40px; background: #f4ecd8; box-shadow: 0 4px 15px rgba(0,0,0,0.06); position: relative;">
+                    <div style="content: ''; position: absolute; width: 10px; height: 10px; border: 1px solid #c4b59d; top: 4px; left: 4px; border-right: none; border-bottom: none;"></div>
+                    <div style="content: ''; position: absolute; width: 10px; height: 10px; border: 1px solid #c4b59d; bottom: 4px; right: 4px; border-left: none; border-top: none;"></div>
+                    $clearMessage
+                </h2>
             </body>
             </html>
         """.trimIndent()
