@@ -12,6 +12,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.consumeEach
 import java.util.Collections
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
@@ -97,9 +98,7 @@ fun Application.dashboardRoutes() {
         webSocket("/ws") {
             connections += this
             try {
-                for (frame in incoming) {
-                    // Ignore incoming messages from client
-                }
+                incoming.consumeEach { _ -> /* keep-alive: we don't process client messages */ }
             } catch (_: ClosedReceiveChannelException) {
                 // Ignore disconnect
             } finally {
