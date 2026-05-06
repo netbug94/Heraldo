@@ -70,8 +70,9 @@ class GoogleTasksClient {
         val state = java.util.UUID.randomUUID().toString()
         expectedState = state
 
+        val externalPort = System.getenv("EXTERNAL_PORT") ?: "8080"
         val url = flow.newAuthorizationUrl()
-            .setRedirectUri("https://heraldo.local/Callback")
+            .setRedirectUri("http://localhost:$externalPort/Callback")
             .setState(state)
             .build()
             
@@ -87,8 +88,9 @@ class GoogleTasksClient {
     }
 
     fun exchangeCode(code: String) {
+        val externalPort = System.getenv("EXTERNAL_PORT") ?: "8080"
         val response = flow.newTokenRequest(code)
-            .setRedirectUri("https://heraldo.local/Callback")
+            .setRedirectUri("http://localhost:$externalPort/Callback")
             .execute()
         _credential = flow.createAndStoreCredential(response, "user")
         pendingAuthUrl = null
