@@ -1,4 +1,3 @@
-// dashboard.ts
 // Type declarations for QRCode library loaded via CDN
 interface QRCodeOptions {
     text: string;
@@ -281,18 +280,18 @@ export const getDashboardHtml = () => `
 
     <div class="page-header">
         <h1>📜 Heraldo Mensajero</h1>
-        <p>WhatsApp Courier Engine</p>
+        <p>WhatsApp Engine</p>
     </div>
 
     <div class="engine-status">
         <div class="engine-dot" id="engine-dot"></div>
-        <span id="engine-label">Consulting the Oracle...</span>
+        <span id="engine-label">Checking status...</span>
     </div>
 
     <div class="card" id="main-card">
         <div class="state-view">
             <div class="spinner"></div>
-            <div class="state-sub">Connecting to the Courier Engine...</div>
+            <div class="state-sub">Connecting to WhatsApp Engine...</div>
         </div>
     </div>
 
@@ -310,11 +309,11 @@ export const getDashboardHtml = () => `
             const label = document.getElementById('engine-label');
             dot.className = 'engine-dot';
             const map = {
-                CONNECTED:   ['dot-online',   'Couriers Active \u00b7 Connected'],
-                OFFLINE:     ['dot-offline',  'Couriers Asleep'],
-                AUTH_FAILED: ['dot-offline',  'Seal Rejected'],
-                STARTING:    ['dot-starting', 'Summoning Magic\u2026'],
-                AWAITING_QR: ['dot-qr',       'Awaiting Royal Seal'],
+                CONNECTED:   ['dot-online',   'WhatsApp Engine: Connected'],
+                OFFLINE:     ['dot-offline',  'WhatsApp Engine: Offline'],
+                AUTH_FAILED: ['dot-offline',  'Auth Failed'],
+                STARTING:    ['dot-starting', 'Starting Engine...'],
+                AWAITING_QR: ['dot-qr',       'Awaiting QR Scan'],
             };
             const [cls, text] = map[status] || ['', status];
             if (cls) dot.classList.add(cls);
@@ -329,9 +328,9 @@ export const getDashboardHtml = () => `
                 <div class="state-view">
                     <div class="status-badge badge-offline">&bull; Offline</div>
                     <div class="state-icon">🛡️</div>
-                    <div class="state-title">Couriers are Asleep</div>
-                    <div class="state-sub">\${reason ? 'Reason: ' + reason + '.' : 'Summon the engine to connect thy WhatsApp.'}</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Summon Couriers</button>
+                    <div class="state-title">Engine is Offline</div>
+                    <div class="state-sub">\${reason ? 'Reason: ' + reason + '.' : 'Start the engine to connect WhatsApp.'}</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Start WhatsApp Engine</button>
                 </div>
             \`;
         }
@@ -340,10 +339,10 @@ export const getDashboardHtml = () => `
             setEngineBar('STARTING');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-starting">&bull; Awakening</div>
+                    <div class="status-badge badge-starting">&bull; Starting</div>
                     <div class="spinner"></div>
-                    <div class="state-title">Awakening the mystical browser...</div>
-                    <div class="state-sub">Patience, my lord. The magical seal (QR) shall appear shortly.</div>
+                    <div class="state-title">Booting Chromium...</div>
+                    <div class="state-sub">This takes a few seconds. The QR code will appear shortly.</div>
                 </div>
             \`;
         }
@@ -352,10 +351,10 @@ export const getDashboardHtml = () => `
             setEngineBar('AWAITING_QR');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-qr">&bull; Awaiting Royal Seal</div>
+                    <div class="status-badge badge-qr">&bull; Awaiting QR Scan</div>
                     <div class="qr-wrapper"><div id="qr-code"></div></div>
-                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Scan Seal</div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Abandon Summoning</button>
+                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Scan QR</div>
+                    <button class="btn btn-danger" onclick="stopEngine()">Cancel & Go Offline</button>
                 </div>
             \`;
             setTimeout(() => {
@@ -379,13 +378,13 @@ export const getDashboardHtml = () => `
                     <div class="connected-box">
                         <div class="icon">📜</div>
                         <h3>Signal Established</h3>
-                        <p>The couriers stand ready to receive and deliver decrees from Heraldo Gestor.</p>
+                        <p>Ready to receive and deliver tasks from Heraldo Gestor.</p>
                     </div>
                     <div class="send-row">
-                        <input id="test-msg" type="text" placeholder="Draft a test dispatch..." />
+                        <input id="test-msg" type="text" placeholder="Test message text..." />
                         <button id="send-btn" onclick="sendTest()">Send</button>
                     </div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Dismiss Couriers (Disconnect)</button>
+                    <button class="btn btn-danger" onclick="stopEngine()">Stop & Disconnect</button>
                 </div>
             \`;
         }
@@ -394,11 +393,11 @@ export const getDashboardHtml = () => `
             setEngineBar('AUTH_FAILED');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-offline">&bull; Seal Rejected</div>
+                    <div class="status-badge badge-offline">&bull; Auth Failed</div>
                     <div class="state-icon">🚩</div>
                     <div class="state-title">Authentication Failed</div>
-                    <div class="state-sub">The realm of WhatsApp rejected thy session. Summon the couriers anew and rescan the seal.</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Resummon Couriers</button>
+                    <div class="state-sub">WhatsApp rejected the session. Restart the engine and scan the QR code again.</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Restart Engine</button>
                 </div>
             \`;
         }
@@ -410,7 +409,7 @@ export const getDashboardHtml = () => `
         }
 
         async function stopEngine() {
-            if (!confirm('Dismiss the couriers?\\nThou wilt need to present the Royal Seal (QR) again to reconnect.')) return;
+            if (!confirm('Disconnect WhatsApp?\\nYou will need to scan the QR code again to reconnect.')) return;
             await fetch('/api/session', { method: 'DELETE', headers: API_HEADERS });
             await update();
         }
@@ -420,7 +419,7 @@ export const getDashboardHtml = () => `
             const btn   = document.getElementById('send-btn');
             const msg   = input?.value.trim();
             if (!msg) return;
-            btn.textContent = 'Flying\u2026';
+            btn.textContent = 'Sending\u2026';
             btn.disabled = true;
             try {
                 await fetch('/api/sendText', {
