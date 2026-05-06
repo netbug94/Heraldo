@@ -1,5 +1,4 @@
 // dashboard.ts
-
 // Type declarations for QRCode library loaded via CDN
 interface QRCodeOptions {
     text: string;
@@ -22,27 +21,32 @@ export const getDashboardHtml = () => `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Heraldo Mensajero</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:       #0f172a;
-            --surface:  #1e293b;
-            --primary:  #8b5cf6;
-            --text:     #f8fafc;
-            --muted:    #94a3b8;
-            --success:  #10b981;
-            --warning:  #f59e0b;
-            --danger:   #ef4444;
-            --border:   #334155;
-            --secondary:#475569;
-            --cyan:     #06b6d4;
+            --bg:       #1a1614;
+            --surface:  #1e1917;
+            --primary:  #8c1c1c;
+            --primary-hover: #b71c1c;
+            --text:     #d8cbb5;
+            --muted:    #a89f91;
+            --success:  #388e3c;
+            --warning:  #d4af37;
+            --danger:   #b71c1c;
+            --border:   #8b7355;
+            --secondary:#3a322b;
+            --gold:     #d4af37;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Cormorant Garamond', serif;
             background-color: var(--bg);
+            background-image: radial-gradient(circle at center, #2a2420 0%, #0d0b0a 100%);
             color: var(--text);
             min-height: 100dvh;
             display: flex;
@@ -57,19 +61,20 @@ export const getDashboardHtml = () => `
             max-width: 480px;
             margin-bottom: 1.75rem;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px dashed var(--border);
+            text-align: center;
         }
         .page-header h1 {
+            font-family: 'Cinzel', serif;
             font-size: clamp(1.6rem, 5vw, 2.2rem);
-            background: linear-gradient(to right, var(--primary), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 0.3rem;
         }
         .page-header p {
             color: var(--muted);
-            font-size: 0.9rem;
-            margin-top: 0.3rem;
+            font-size: 1.1rem;
+            font-style: italic;
         }
 
         /* ── Engine status pill ── */
@@ -77,33 +82,40 @@ export const getDashboardHtml = () => `
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.8rem;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: var(--muted);
+            color: var(--text);
             letter-spacing: 0.04em;
             text-transform: uppercase;
             margin-bottom: 1.25rem;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 16px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         .engine-dot {
-            width: 8px; height: 8px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             background: var(--secondary);
             flex-shrink: 0;
+            border: 1px solid #000;
         }
-        .dot-online   { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        .dot-offline  { background: var(--danger);  box-shadow: 0 0 6px var(--danger); }
-        .dot-starting { background: var(--primary); box-shadow: 0 0 6px var(--primary); animation: blink 1s infinite; }
-        .dot-qr       { background: var(--warning); box-shadow: 0 0 6px var(--warning); animation: blink 1s infinite; }
+        .dot-online   { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .dot-offline  { background: var(--danger);  box-shadow: 0 0 8px var(--danger); }
+        .dot-starting { background: var(--gold);    box-shadow: 0 0 8px var(--gold); animation: blink 1s infinite; }
+        .dot-qr       { background: var(--gold);    box-shadow: 0 0 8px var(--gold); animation: blink 1s infinite; }
 
         /* ── Main card ── */
         .card {
             width: 100%;
             max-width: 480px;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: 3px double var(--border);
+            border-radius: 4px;
             padding: 2rem 1.75rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.5);
         }
 
         /* ── State views ── */
@@ -113,9 +125,9 @@ export const getDashboardHtml = () => `
             align-items: center;
             text-align: center;
         }
-        .state-icon   { font-size: 3rem; margin-bottom: 1rem; line-height: 1; }
-        .state-title  { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .state-sub    { color: var(--muted); font-size: 0.9rem; line-height: 1.6; max-width: 300px; margin-bottom: 1.75rem; }
+        .state-icon   { font-size: 3rem; margin-bottom: 1rem; line-height: 1; text-shadow: 2px 2px 5px #000; }
+        .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--gold); }
+        .state-sub    { color: var(--muted); font-size: 1.1rem; line-height: 1.6; max-width: 300px; margin-bottom: 1.75rem; }
 
         /* ── Status badge ── */
         .status-badge {
@@ -123,84 +135,95 @@ export const getDashboardHtml = () => `
             align-items: center;
             gap: 0.4rem;
             padding: 0.3rem 0.85rem;
-            border-radius: 9999px;
+            font-family: 'Cinzel', serif;
             font-size: 0.78rem;
             font-weight: 700;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             border: 1px solid currentColor;
             margin-bottom: 1.5rem;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
         }
-        .badge-online   { color: var(--success); background: rgba(16,185,129,0.1); }
-        .badge-offline  { color: var(--danger);  background: rgba(239,68,68,0.1); }
-        .badge-starting { color: var(--primary); background: rgba(139,92,246,0.1); animation: blink 1s infinite; }
-        .badge-qr       { color: var(--warning); background: rgba(245,158,11,0.1); animation: blink 1s infinite; }
+        .badge-online   { color: #a5d6a7; background: #1a2e1e; border-color: #388e3c; }
+        .badge-offline  { color: #ff8a80; background: #3e1515; border-color: #b71c1c; }
+        .badge-starting { color: #ffe082; background: #3e2713; border-color: #f57f17; animation: blink 1s infinite; }
+        .badge-qr       { color: #ffe082; background: #3e2713; border-color: #f57f17; animation: blink 1s infinite; }
 
         /* ── Connected box ── */
         .connected-box {
             width: 100%;
-            background: rgba(16,185,129,0.07);
-            border: 1px solid rgba(16,185,129,0.2);
-            border-radius: 12px;
+            background: #25201c;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--success);
             padding: 1.5rem;
             margin-bottom: 1.25rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         .connected-box .icon { font-size: 2rem; margin-bottom: 0.75rem; }
-        .connected-box h3 { color: var(--success); font-size: 1.05rem; margin-bottom: 0.3rem; }
-        .connected-box p  { color: var(--muted); font-size: 0.875rem; }
+        .connected-box h3 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .connected-box p  { color: var(--muted); font-size: 1rem; }
 
         /* ── QR wrapper ── */
         .qr-wrapper {
             background: #ffffff;
-            border-radius: 12px;
+            border: 4px solid var(--border);
             padding: 14px;
             margin-bottom: 1rem;
-            box-shadow: 0 0 30px rgba(139,92,246,0.2);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
         .qr-hint {
-            color: var(--muted);
-            font-size: 0.8rem;
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 0.85rem;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             font-weight: 600;
             margin-bottom: 1.5rem;
         }
 
-        /* ── Spinner ── */
+        /* ── Spinner (Medieval Sun/Astrolabe vibe) ── */
         .spinner {
             width: 52px; height: 52px;
-            border: 3px solid rgba(139,92,246,0.15);
-            border-top-color: var(--primary);
+            border: 3px dashed var(--gold);
             border-radius: 50%;
-            animation: spin 0.75s linear infinite;
+            animation: spin 3s linear infinite;
             margin-bottom: 1.25rem;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
         }
 
         /* ── Buttons ── */
         .btn {
             width: 100%;
             padding: 0.85rem 1.25rem;
-            border-radius: 10px;
-            font-family: inherit;
+            font-family: 'Cinzel', serif;
             font-size: 0.95rem;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
-            border: none;
-            transition: all 0.2s;
+            border: 1px solid var(--gold);
+            transition: all 0.2s ease;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
         }
         .btn + .btn { margin-top: 0.75rem; }
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(to bottom, #4a1c1c, #2a0b0b);
+            color: #e6dfd1;
+        }
+        .btn-primary:hover { 
+            background: linear-gradient(to bottom, #5c2323, #3a0f0f);
             color: #fff;
-            box-shadow: 0 4px 14px rgba(139,92,246,0.35);
+            transform: translateY(-1px); 
         }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
         .btn-danger {
-            background: rgba(239,68,68,0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: linear-gradient(to bottom, #3a322b, #1f1b17);
+            color: #c29b62;
+            border-color: var(--border);
         }
-        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+        .btn-danger:hover { 
+            background: linear-gradient(to bottom, #4a4037, #2a2520);
+            color: var(--gold); 
+        }
 
         /* ── Test message row ── */
         .send-row {
@@ -211,41 +234,41 @@ export const getDashboardHtml = () => `
         }
         .send-row input {
             flex: 1;
-            background: rgba(255,255,255,0.04);
+            background: #2a2420;
             border: 1px solid var(--border);
-            border-radius: 8px;
             padding: 0.7rem 0.9rem;
             color: var(--text);
-            font-family: inherit;
-            font-size: 0.875rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
             outline: none;
             transition: border-color 0.2s;
             min-width: 0;
         }
-        .send-row input:focus { border-color: var(--primary); }
-        .send-row input::placeholder { color: var(--secondary); }
+        .send-row input:focus { border-color: var(--gold); }
+        .send-row input::placeholder { color: var(--secondary); font-style: italic; }
         .send-row button {
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
+            background: linear-gradient(to bottom, #4a1c1c, #2a0b0b);
+            color: #e6dfd1;
+            border: 1px solid var(--gold);
             padding: 0.7rem 1.1rem;
-            font-family: inherit;
+            font-family: 'Cinzel', serif;
             font-weight: 700;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
             transition: filter 0.2s;
             flex-shrink: 0;
+            text-transform: uppercase;
         }
-        .send-row button:hover { filter: brightness(1.1); }
+        .send-row button:hover { filter: brightness(1.2); }
         .send-row button:disabled { opacity: 0.5; cursor: default; }
 
         /* ── Footer ── */
         .page-footer {
             margin-top: 2rem;
-            color: rgba(148,163,184,0.4);
-            font-size: 0.72rem;
+            color: var(--muted);
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
             letter-spacing: 0.05em;
             text-align: center;
         }
@@ -257,19 +280,19 @@ export const getDashboardHtml = () => `
 <body>
 
     <div class="page-header">
-        <h1>📡 Heraldo Mensajero</h1>
-        <p>WhatsApp Delivery Engine</p>
+        <h1>📜 Heraldo Mensajero</h1>
+        <p>WhatsApp Courier Engine</p>
     </div>
 
     <div class="engine-status">
         <div class="engine-dot" id="engine-dot"></div>
-        <span id="engine-label">Checking status...</span>
+        <span id="engine-label">Consulting the Oracle...</span>
     </div>
 
     <div class="card" id="main-card">
         <div class="state-view">
             <div class="spinner"></div>
-            <div class="state-sub">Connecting to engine...</div>
+            <div class="state-sub">Connecting to the Courier Engine...</div>
         </div>
     </div>
 
@@ -287,11 +310,11 @@ export const getDashboardHtml = () => `
             const label = document.getElementById('engine-label');
             dot.className = 'engine-dot';
             const map = {
-                CONNECTED:   ['dot-online',   'Engine Active \u00b7 Connected'],
-                OFFLINE:     ['dot-offline',  'Engine Offline'],
-                AUTH_FAILED: ['dot-offline',  'Auth Failed'],
-                STARTING:    ['dot-starting', 'Engine Starting\u2026'],
-                AWAITING_QR: ['dot-qr',       'Awaiting QR Scan'],
+                CONNECTED:   ['dot-online',   'Couriers Active \u00b7 Connected'],
+                OFFLINE:     ['dot-offline',  'Couriers Asleep'],
+                AUTH_FAILED: ['dot-offline',  'Seal Rejected'],
+                STARTING:    ['dot-starting', 'Summoning Magic\u2026'],
+                AWAITING_QR: ['dot-qr',       'Awaiting Royal Seal'],
             };
             const [cls, text] = map[status] || ['', status];
             if (cls) dot.classList.add(cls);
@@ -305,10 +328,10 @@ export const getDashboardHtml = () => `
             card.innerHTML = \`
                 <div class="state-view">
                     <div class="status-badge badge-offline">&bull; Offline</div>
-                    <div class="state-icon">🛑</div>
-                    <div class="state-title">Engine is Offline</div>
-                    <div class="state-sub">\${reason ? 'Reason: ' + reason + '.' : 'Start the engine to connect WhatsApp.'}</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Start WhatsApp Engine</button>
+                    <div class="state-icon">🛡️</div>
+                    <div class="state-title">Couriers are Asleep</div>
+                    <div class="state-sub">\${reason ? 'Reason: ' + reason + '.' : 'Summon the engine to connect thy WhatsApp.'}</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Summon Couriers</button>
                 </div>
             \`;
         }
@@ -317,10 +340,10 @@ export const getDashboardHtml = () => `
             setEngineBar('STARTING');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-starting">&bull; Starting</div>
+                    <div class="status-badge badge-starting">&bull; Awakening</div>
                     <div class="spinner"></div>
-                    <div class="state-title">Booting Chromium...</div>
-                    <div class="state-sub">This takes a few seconds. The QR code will appear shortly.</div>
+                    <div class="state-title">Awakening the mystical browser...</div>
+                    <div class="state-sub">Patience, my lord. The magical seal (QR) shall appear shortly.</div>
                 </div>
             \`;
         }
@@ -329,10 +352,10 @@ export const getDashboardHtml = () => `
             setEngineBar('AWAITING_QR');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-qr">&bull; Awaiting QR Scan</div>
+                    <div class="status-badge badge-qr">&bull; Awaiting Royal Seal</div>
                     <div class="qr-wrapper"><div id="qr-code"></div></div>
-                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Scan QR</div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Cancel &amp; Go Offline</button>
+                    <div class="qr-hint">WhatsApp &rarr; Linked Devices &rarr; Scan Seal</div>
+                    <button class="btn btn-danger" onclick="stopEngine()">Abandon Summoning</button>
                 </div>
             \`;
             setTimeout(() => {
@@ -340,7 +363,8 @@ export const getDashboardHtml = () => `
                 if (el && qrCode) {
                     new QRCode(el, {
                         text: qrCode, width: 220, height: 220,
-                        colorDark: '#0f172a', colorLight: '#ffffff',
+                        colorDark: '#1a1614', /* Dark brown instead of black for theme matching */
+                        colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.L
                     });
                 }
@@ -353,15 +377,15 @@ export const getDashboardHtml = () => `
                 <div class="state-view">
                     <div class="status-badge badge-online">&bull; Connected</div>
                     <div class="connected-box">
-                        <div class="icon">📱</div>
+                        <div class="icon">📜</div>
                         <h3>Signal Established</h3>
-                        <p>Ready to receive &amp; deliver tasks from Heraldo Gestor.</p>
+                        <p>The couriers stand ready to receive and deliver decrees from Heraldo Gestor.</p>
                     </div>
                     <div class="send-row">
-                        <input id="test-msg" type="text" placeholder="Test message text..." />
+                        <input id="test-msg" type="text" placeholder="Draft a test dispatch..." />
                         <button id="send-btn" onclick="sendTest()">Send</button>
                     </div>
-                    <button class="btn btn-danger" onclick="stopEngine()">Disconnect Session</button>
+                    <button class="btn btn-danger" onclick="stopEngine()">Dismiss Couriers (Disconnect)</button>
                 </div>
             \`;
         }
@@ -370,11 +394,11 @@ export const getDashboardHtml = () => `
             setEngineBar('AUTH_FAILED');
             document.getElementById('main-card').innerHTML = \`
                 <div class="state-view">
-                    <div class="status-badge badge-offline">&bull; Auth Failed</div>
-                    <div class="state-icon">⚠️</div>
+                    <div class="status-badge badge-offline">&bull; Seal Rejected</div>
+                    <div class="state-icon">🚩</div>
                     <div class="state-title">Authentication Failed</div>
-                    <div class="state-sub">WhatsApp rejected the session. Start a new session and scan the QR code again.</div>
-                    <button class="btn btn-primary" onclick="startEngine()">Restart Engine</button>
+                    <div class="state-sub">The realm of WhatsApp rejected thy session. Summon the couriers anew and rescan the seal.</div>
+                    <button class="btn btn-primary" onclick="startEngine()">Resummon Couriers</button>
                 </div>
             \`;
         }
@@ -386,7 +410,7 @@ export const getDashboardHtml = () => `
         }
 
         async function stopEngine() {
-            if (!confirm('Disconnect WhatsApp?\\nYou will need to scan the QR code again.')) return;
+            if (!confirm('Dismiss the couriers?\\nThou wilt need to present the Royal Seal (QR) again to reconnect.')) return;
             await fetch('/api/session', { method: 'DELETE', headers: API_HEADERS });
             await update();
         }
@@ -396,7 +420,7 @@ export const getDashboardHtml = () => `
             const btn   = document.getElementById('send-btn');
             const msg   = input?.value.trim();
             if (!msg) return;
-            btn.textContent = 'Sending\u2026';
+            btn.textContent = 'Flying\u2026';
             btn.disabled = true;
             try {
                 await fetch('/api/sendText', {
@@ -429,7 +453,7 @@ export const getDashboardHtml = () => `
 
         setInterval(update, 2500);
         update();
-    <\/script>
+    </script>
 </body>
 </html>
 `;

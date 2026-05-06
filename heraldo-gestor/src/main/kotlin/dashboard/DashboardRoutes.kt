@@ -28,7 +28,7 @@ fun Application.dashboardRoutes() {
     val repository by inject<TaskRepository>()
     val timezoneProvider by inject<TimezoneProvider>()
     val mensajeroClient by inject<MensajeroClient>()
-    val googleTasksClient by inject<GoogleTasksClient>() // <--- NEW: Inject Google Client
+    val googleTasksClient by inject<GoogleTasksClient>()
 
     routing {
         get("/") {
@@ -39,7 +39,6 @@ fun Application.dashboardRoutes() {
             val currentZone = userTime.zone.id
             val formattedTime = userTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
-            // --- NEW: Grab the pending URL if it exists ---
             val authLink = googleTasksClient.pendingAuthUrl
 
             val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
@@ -50,12 +49,12 @@ fun Application.dashboardRoutes() {
             val code = call.request.queryParameters["code"]
             val error = call.request.queryParameters["error"]
             val state = call.request.queryParameters["state"]
-            
+
             if (error != null) {
                 val html = DashboardViews.renderLoadingState("❌ Authorization failed: $error")
                 return@get call.respondText(html, ContentType.Text.Html)
             }
-            
+
             if (code == null || state == null) {
                 val html = DashboardViews.renderLoadingState("❌ Authorization failed: Missing code or state.")
                 return@get call.respondText(html, ContentType.Text.Html)
@@ -68,37 +67,37 @@ fun Application.dashboardRoutes() {
 
             try {
                 googleTasksClient.exchangeCode(code)
-                val html = DashboardViews.renderLoadingState("✅ Authorization successful! You can close this window.")
+                val html = DashboardViews.renderLoadingState("✅ Royal Seal Accepted! You may close this parchment.")
                 call.respondText(html, ContentType.Text.Html)
             } catch (e: Exception) {
-                val html = DashboardViews.renderLoadingState("❌ Code exchange failed: ${e.message}")
+                val html = DashboardViews.renderLoadingState("❌ The Seal was rejected: ${e.message}")
                 call.respondText(html, ContentType.Text.Html)
             }
         }
 
         get("/sync") {
             repository.fetchTodayTasks()
-            val html = DashboardViews.renderLoadingState("Syncing Tasks...")
+            val html = DashboardViews.renderLoadingState("Summoning Decrees...")
             call.respondText(html, ContentType.Text.Html)
         }
 
         get("/sync-zone") {
             timezoneProvider.forceRefresh()
-            val html = DashboardViews.renderLoadingState("Updating Timezone...")
+            val html = DashboardViews.renderLoadingState("Aligning Astrolabe...")
             call.respondText(html, ContentType.Text.Html)
         }
 
         post("/sync-env") {
             val request = call.receive<TemplateUpdateRequest>()
             mensajeroClient.updateTemplate(request.template)
-            val html = DashboardViews.renderLoadingState("Template Updated!")
+            val html = DashboardViews.renderLoadingState("The Ravens have been Dispatched!")
             call.respondText(html, ContentType.Text.Html)
         }
 
         webSocket("/ws") {
             connections += this
             try {
-                incoming.consumeEach { _ -> /* keep-alive: we don't process client messages */ }
+                incoming.consumeEach { _ -> /* keep-alive */ }
             } catch (_: ClosedReceiveChannelException) {
                 // Ignore disconnect
             } finally {
