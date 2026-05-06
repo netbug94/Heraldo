@@ -22,7 +22,7 @@ const PASSWORD_HASH = bcrypt.hashSync(DASHBOARD_PASSWORD_RAW, 10);
 
 // ── Session store ─────────────────────────────────────────────────────────────
 
-const COOKIE_NAME = 'heraldo_session';
+const COOKIE_NAME = 'heraldo_mensajero_session';
 const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const activeSessions = new Set<string>();
 

@@ -33,7 +33,7 @@ object HeraldoSessionStore {
 
 // ── Session plugin install ────────────────────────────────────────────────────
 
-private const val COOKIE_NAME = "heraldo_session"
+private const val COOKIE_NAME = "heraldo_gestor_session"
 private val COOKIE_MAX_AGE = 30.days
 
 /**
