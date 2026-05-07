@@ -1,3 +1,5 @@
+sudo find . -name "SingletonLock" -delete
+
 docker system prune -a --volumes -f
 
 docker ps -a       # Should show zero containers
