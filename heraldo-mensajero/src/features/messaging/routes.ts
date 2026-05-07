@@ -3,7 +3,7 @@ import { wa } from '../../core/whatsapp.js';
 import { logger } from '../../core/logger.js';
 
 export const messagingRouter = Router();
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.HERALDO_INTERNAL_TOKEN;
 
 // ==========================================
 // SECURITY MIDDLEWARE
