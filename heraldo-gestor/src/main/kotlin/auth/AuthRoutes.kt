@@ -9,7 +9,7 @@ import io.ktor.server.sessions.*
 import org.koin.ktor.ext.inject
 import io.ktor.server.config.ApplicationConfig
 import java.security.MessageDigest
-import java.util.UUID
+import kotlin.time.Duration.Companion.days
 
 fun Application.authRoutes() {
 
@@ -25,7 +25,9 @@ fun Application.authRoutes() {
         // ── GET /login ─────────────────────────────────────────────────────
         get("/login") {
             val session = call.sessions.get<HeraldoSession>()
-            if (session != null && HeraldoSessionStore.contains(session.token)) {
+            val now = System.currentTimeMillis()
+
+            if (session != null && now <= session.expiresAt) {
                 call.respondRedirect("/")
                 return@get
             }
@@ -38,7 +40,6 @@ fun Application.authRoutes() {
             val username = params["username"]?.trim() ?: ""
             val password = params["password"] ?: ""
 
-            // Constant-time string comparison to prevent timing attacks
             val userMatch = constantTimeEquals(username, expectedUser)
             val passMatch = constantTimeEquals(password, expectedPassword)
 
@@ -51,28 +52,20 @@ fun Application.authRoutes() {
                 return@post
             }
 
-            // Issue a new session token
-            val token = UUID.randomUUID().toString() + UUID.randomUUID().toString()
-            HeraldoSessionStore.add(token)
-            call.sessions.set(HeraldoSession(token))
+            // Issue a stateless session valid for 30 days
+            val expirationTime = System.currentTimeMillis() + 30.days.inWholeMilliseconds
+            call.sessions.set(HeraldoSession(username, expirationTime))
+
             call.respondRedirect("/")
         }
 
         // ── GET /logout ────────────────────────────────────────────────────
         get("/logout") {
-            val session = call.sessions.get<HeraldoSession>()
-            if (session != null) {
-                HeraldoSessionStore.remove(session.token)
-            }
             call.sessions.clear<HeraldoSession>()
             call.respondRedirect("/login")
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constant-time string comparison (prevents timing side-channel attacks)
-// ─────────────────────────────────────────────────────────────────────────────
 
 private fun constantTimeEquals(a: String, b: String): Boolean {
     val aBytes = a.toByteArray(Charsets.UTF_8)

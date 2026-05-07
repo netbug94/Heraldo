@@ -51,10 +51,9 @@ class TaskDispatcher(
         }
     }
 
-    // --- NEW METHOD FOR DOCKER SHUTDOWN ---
     fun stop() {
         logger.info("Dispatcher: Shutting down background workers gracefully...")
-        scope.cancel() // Cancels all running background jobs safely
+        scope.cancel()
     }
 
     internal suspend fun checkAlarms() {
@@ -68,9 +67,9 @@ class TaskDispatcher(
 
         // 1. Check and send Heartbeat
         if (heartbeatTime != null && userNow == heartbeatTime && lastHeartbeatDate != userDate) {
-            logger.info("💓 Triggering Daily System Heartbeat")
+            logger.info("🫀 Triggering Daily System Heartbeat")
             val success = mensajeroClient.sendMessage(
-                "💓 System Heartbeat",
+                "🫀 System Heartbeat",
                 "Heraldo is online and monitoring your tasks."
             )
             if (success) {
@@ -86,15 +85,22 @@ class TaskDispatcher(
             val dueMins = task.dueTime.hour * 60 + task.dueTime.minute
             val triggerMins = dueMins - alertLeadTimeMinutes.toInt()
 
-            val isTimeToTrigger = nowMins >= triggerMins && nowMins <= (triggerMins + EXPIRATION_WINDOW_MINUTES)
-            val isLate = nowMins > (triggerMins + EXPIRATION_WINDOW_MINUTES)
+            // Calculate how many minutes late the task is
+            var minutesLate = nowMins - triggerMins
 
-            val shouldTrigger = isTimeToTrigger || isLate
+            // BULLETPROOF MIDNIGHT WRAP-AROUND (1440 minutes in a day)
+            // If the math says we are -1430 minutes "late" (trigger was 23:55, now is 00:05), it actually means we are 10 minutes late.
+            if (minutesLate < -720) minutesLate += 1440
+            if (minutesLate > 720) minutesLate -= 1440
 
-            if (shouldTrigger && !task.mensajeroDone) {
+            // Logic Gates
+            val isTimeToTrigger = minutesLate in 0..EXPIRATION_WINDOW_MINUTES
+            val isLate = minutesLate > 0
+
+            if (isTimeToTrigger && !task.mensajeroDone) {
                 if (task.retryCount >= 5) {
                     if (task.retryCount == 5) {
-                        logger.error("❌ Task '${task.title}' reached max retries (5). Giving up to prevent infinite loop.")
+                        logger.error("❌ Task '${task.title}' reached max retries (5). Giving up.")
                         repository.incrementRetryCount(task.id)
                     }
                     return@forEach
@@ -105,17 +111,16 @@ class TaskDispatcher(
                 } else {
                     task.title
                 }
-                val displayDesc = task.description
 
-                logger.info("🚀 TRIGGER: Sending to Mensajero for '$displayTitle' (Attempt ${task.retryCount + 1})")
-                val success = mensajeroClient.sendMessage(displayTitle, displayDesc)
+                logger.info("🚀 TRIGGER: Sending '${task.title}' (Attempt ${task.retryCount + 1})")
+                val success = mensajeroClient.sendMessage(displayTitle, task.description)
 
                 if (success) {
                     repository.markAsSent(task.id)
                     repository.completeTaskInGoogle(task.taskListId, task.id)
                 } else {
                     repository.incrementRetryCount(task.id)
-                    logger.warn("⚠️ Mensajero delivery failed for '${task.title}'. Will retry next minute.")
+                    logger.warn("⚠️ Mensajero delivery failed. Retrying in 1 minute.")
                 }
             }
         }

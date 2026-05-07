@@ -1,6 +1,15 @@
-FROM node:20-slim
+# Stage 1: Builder
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
 
-# Install latest chromium and dependencies for Puppeteer
+# Stage 2: Production (The final image)
+FROM node:20-slim
+# Install Chromium and dependencies
 RUN apt-get update \
     && apt-get install -y chromium dumb-init \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
@@ -9,19 +18,19 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Tell Puppeteer to skip downloading Chromium and use the system one
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV NODE_ENV=production
 
+# Only install production dependencies
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --omit=dev
 
-COPY tsconfig.json ./
-COPY src ./src
-
-RUN npm run build
+# Copy compiled JS from builder stage
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["npm", "start"]
+# Point to the compiled JS folder
+CMD ["node", "dist/index.js"]

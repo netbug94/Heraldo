@@ -5,41 +5,82 @@
 
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
-
 const DASHBOARD_USER = process.env.DASHBOARD_USER;
 const DASHBOARD_PASSWORD_RAW = process.env.DASHBOARD_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_change_me_in_prod';
 
 if (!DASHBOARD_USER || !DASHBOARD_PASSWORD_RAW) {
-    console.error('❌ FATAL: DASHBOARD_USER and DASHBOARD_PASSWORD must be set in env.');
+    console.error('❌ FATAL: DASHBOARD_USER and DASHBOARD_PASSWORD must be set.');
     process.exit(1);
 }
 
-// Hash the password once at startup so plaintext never lingers in memory.
 const PASSWORD_HASH = bcrypt.hashSync(DASHBOARD_PASSWORD_RAW, 10);
-
-// ── Session store ─────────────────────────────────────────────────────────────
-
 const COOKIE_NAME = 'heraldo_mensajero_session';
 const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const activeSessions = new Set<string>();
-
-function generateToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-}
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-
-/**
- * Protects a route: redirects to /login if no valid session cookie is present.
- */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
     const token = req.cookies?.[COOKIE_NAME];
-    if (token && activeSessions.has(token)) {
+
+    if (!token) return res.redirect('/login');
+
+    try {
+        // If the token is valid and hasn't expired, they pass.
+        // Container restarts don't affect this!
+        jwt.verify(token, JWT_SECRET);
         return next();
+    } catch (err) {
+        // Token is tampered with or expired
+        res.clearCookie(COOKIE_NAME);
+        res.redirect('/login');
     }
+}
+
+// ── Route handlers ────────────────────────────────────────────────────────────
+export async function handleLoginPost(req: Request, res: Response): Promise<void> {
+    const { username, password } = req.body as { username?: string; password?: string };
+
+    const usernameMatch = username === DASHBOARD_USER;
+    const passwordMatch = password ? await bcrypt.compare(password, PASSWORD_HASH) : false;
+
+    if (!usernameMatch || !passwordMatch) {
+        res.send(getLoginHtml('The seal was rejected. Check thy credentials.'));
+        return;
+    }
+
+    // Generate a stateless JWT
+    const token = jwt.sign({ user: username }, JWT_SECRET, { expiresIn: '30d' });
+
+    res.cookie(COOKIE_NAME, token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: COOKIE_MAX_AGE_MS,
+        path: '/',
+    });
+
+    res.redirect('/');
+}
+
+export function handleLoginGet(req: Request, res: Response): void {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (token) {
+        try {
+            // If verification succeeds, they are already logged in
+            jwt.verify(token, JWT_SECRET);
+            res.redirect('/');
+            return;
+        } catch (err) {
+            // Token is invalid/expired, let them fall through to the login page
+        }
+    }
+    res.send(getLoginHtml());
+}
+
+export function handleLogout(_req: Request, res: Response): void {
+    res.clearCookie(COOKIE_NAME, { path: '/' });
     res.redirect('/login');
 }
 
@@ -229,52 +270,4 @@ function getLoginHtml(error?: string): string {
     <p class="footer-note">Heraldo Mensajero &middot; WhatsApp Courier Engine</p>
 </body>
 </html>`;
-}
-
-// ── Route handlers ────────────────────────────────────────────────────────────
-
-export function handleLoginGet(req: Request, res: Response): void {
-    // Already authenticated — send to dashboard
-    const token = req.cookies?.[COOKIE_NAME];
-    if (token && activeSessions.has(token)) {
-        res.redirect('/');
-        return;
-    }
-    res.send(getLoginHtml());
-}
-
-export async function handleLoginPost(req: Request, res: Response): Promise<void> {
-    const { username, password } = req.body as { username?: string; password?: string };
-
-    const usernameMatch = username === DASHBOARD_USER;
-    // Always run bcrypt compare to prevent timing attacks even if username is wrong
-    const passwordMatch = password
-        ? await bcrypt.compare(password, PASSWORD_HASH)
-        : false;
-
-    if (!usernameMatch || !passwordMatch) {
-        res.send(getLoginHtml('The seal was rejected. Check thy credentials.'));
-        return;
-    }
-
-    const token = generateToken();
-    activeSessions.add(token);
-
-    res.cookie(COOKIE_NAME, token, {
-        httpOnly: true,   // Not accessible from JS
-        sameSite: 'lax',  // CSRF protection
-        maxAge: COOKIE_MAX_AGE_MS,
-        path: '/',
-    });
-
-    res.redirect('/');
-}
-
-export function handleLogout(req: Request, res: Response): void {
-    const token = req.cookies?.[COOKIE_NAME];
-    if (token) {
-        activeSessions.delete(token);
-    }
-    res.clearCookie(COOKIE_NAME, { path: '/' });
-    res.redirect('/login');
 }

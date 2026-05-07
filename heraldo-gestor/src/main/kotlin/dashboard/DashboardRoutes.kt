@@ -2,7 +2,6 @@ package com.netbug94.dashboard
 
 import com.netbug94.auth.requireAuth
 import com.netbug94.core.TimezoneProvider
-import com.netbug94.mensajero.MensajeroClient
 import com.netbug94.tasks.GoogleTasksClient
 import com.netbug94.tasks.TaskRepository
 import io.ktor.http.*
@@ -14,10 +13,9 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.consumeEach
-import java.util.concurrent.CopyOnWriteArraySet
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CopyOnWriteArraySet
 
 private val connections = CopyOnWriteArraySet<WebSocketSession>()
 
@@ -25,7 +23,6 @@ fun Application.dashboardRoutes() {
 
     val repository by inject<TaskRepository>()
     val timezoneProvider by inject<TimezoneProvider>()
-    val mensajeroClient by inject<MensajeroClient>()
     val googleTasksClient by inject<GoogleTasksClient>()
 
     routing {
@@ -99,13 +96,29 @@ fun Application.dashboardRoutes() {
         }
 
         post("/webhook/mensajero") {
-            connections.forEach {
+            // 1. Access the structured config from application.conf
+            val config = call.application.environment.config
+            val expectedKey = config.propertyOrNull("app.mensajero.apiKey")?.getString()
+
+            // 2. Get the key provided by the Hand
+            val clientKey = call.request.header("x-api-key")
+
+            // 3. Security Check: Compare the seals
+            if (expectedKey != null && clientKey != expectedKey) {
+                // Use the flavor text you like with the official status code
+                call.respond(HttpStatusCode.Unauthorized, "The seal was rejected.")
+                return@post
+            }
+
+            // 4. Execution: Signal all connected dashboards to refresh
+            connections.forEach { session ->
                 try {
-                    it.send("RELOAD")
+                    session.send(Frame.Text("RELOAD"))
                 } catch (_: Exception) {
-                    // Ignore dead sockets
+                    // Ignore dead sessions
                 }
             }
+
             call.respond(HttpStatusCode.OK)
         }
     }

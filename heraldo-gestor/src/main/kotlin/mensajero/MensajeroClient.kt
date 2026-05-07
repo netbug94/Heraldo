@@ -1,12 +1,13 @@
 package com.netbug94.mensajero
 
-import com.netbug94.core.SettingsRepository
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import org.slf4j.LoggerFactory
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonPrimitive
 
 private val logger = LoggerFactory.getLogger("com.netbug94.mensajero.MensajeroClient")
 
@@ -15,16 +16,13 @@ class MensajeroClient(
     phoneNumber: String,
     private val apiKey: String?,
     private val baseUrl: String,
-    @Volatile private var template: String,
-    private val settingsRepository: SettingsRepository
+    @Volatile private var template: String
 ) {
     private val cleanPhone = phoneNumber.replace(Regex("[^0-9]"), "")
 
-    fun getTemplate(): String = template
-
     suspend fun isHealthy(): Boolean {
         return try {
-            val response: HttpResponse = client.get("$baseUrl/health") {
+            val response: HttpResponse = client.get("${baseUrl}/health") {
                 apiKey?.let { header("x-api-key", it) }
             }
 
@@ -33,9 +31,16 @@ class MensajeroClient(
                 return false
             }
 
-            val statusMap = response.body<Map<String, String>>()
-            statusMap["status"] == "CONNECTED" || statusMap["status"] == "UP"
+            // 1. Safe Serialization: Absorb any data type (string, int, bool)
+            val statusMap = response.body<Map<String, JsonElement>>()
+
+            // 2. Safe Extraction: Get the content of "status" without crashing
+            val status = statusMap["status"]?.jsonPrimitive?.content
+
+            status == "CONNECTED"
+
         } catch (e: Exception) {
+            // 3. Informative Errors: Keep these! They are vital for debugging
             logger.error("🛑 Mensajero Healthcheck failed at: $baseUrl/health")
             logger.error("🛑 Error: ${e.message}")
             false
