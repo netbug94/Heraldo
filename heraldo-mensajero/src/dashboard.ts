@@ -19,11 +19,12 @@ export const getDashboardHtml = () => `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heraldo Mensajero - The Abyss</title>
+    <title>Heraldo Mensajero</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪶</text></svg>">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -464,17 +465,30 @@ export const getDashboardHtml = () => `
         }
 
         // ── Polling loop ───────────────────────────────────────────
+        let lastStatus = null;
+        let lastQr = null;
+
         async function update() {
             try {
                 const res    = await fetch('/api/status');
                 const data   = await res.json();
                 const status = data.session?.status;
+                const qr     = data.session?.qrCode;
 
-                if      (status === 'CONNECTED')   renderConnected();
-                else if (status === 'AWAITING_QR') renderQR(data.session?.qrCode);
-                else if (status === 'STARTING')    renderStarting();
-                else if (status === 'AUTH_FAILED') renderAuthFailed();
-                else                               renderOffline(data.session?.reason);
+                // Only re-render if the status changed, OR if we are in QR mode and the code changed
+                const statusChanged = status !== lastStatus;
+                const qrChanged = status === 'AWAITING_QR' && qr !== lastQr;
+
+                if (statusChanged || qrChanged) {
+                    if      (status === 'CONNECTED')   renderConnected();
+                    else if (status === 'AWAITING_QR') renderQR(qr);
+                    else if (status === 'STARTING')    renderStarting();
+                    else if (status === 'AUTH_FAILED') renderAuthFailed();
+                    else                               renderOffline(data.session?.reason);
+                    
+                    lastStatus = status;
+                    lastQr = qr;
+                }
             } catch (e) {
                 console.error('The abyss stares back (poll failed)', e);
             }

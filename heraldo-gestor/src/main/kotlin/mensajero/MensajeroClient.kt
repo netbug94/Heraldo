@@ -1,5 +1,6 @@
 package com.netbug94.mensajero
 
+import com.netbug94.core.SettingsRepository
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -14,7 +15,8 @@ class MensajeroClient(
     phoneNumber: String,
     private val apiKey: String?,
     private val baseUrl: String,
-    @Volatile private var template: String // <--- Added @Volatile for thread-safe updates
+    @Volatile private var template: String,
+    private val settingsRepository: SettingsRepository
 ) {
     private val cleanPhone = phoneNumber.replace(Regex("[^0-9]"), "")
 
@@ -22,7 +24,8 @@ class MensajeroClient(
 
     fun updateTemplate(newTemplate: String) {
         this.template = newTemplate
-        logger.info("🔄 Message Template updated: $template")
+        settingsRepository.updateMensajeroTemplate(newTemplate)
+        logger.info("🔄 Message Template updated and persisted: $template")
     }
 
     suspend fun isHealthy(): Boolean {
@@ -46,7 +49,9 @@ class MensajeroClient(
     }
 
     suspend fun sendMessage(title: String, description: String?): Boolean {
-        val header = template.replace("{title}", title.trim())
+        val header = template
+            .replace("{title}", title.trim())
+            .replace("%s", title.trim())
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
         val fullMessage = "$header$body"
 
