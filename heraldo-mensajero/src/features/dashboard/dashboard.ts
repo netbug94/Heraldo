@@ -321,7 +321,7 @@ export const getDashboardHtml = () => `
     <script>
         const API_HEADERS = {
             'Content-Type': 'application/json',
-            'x-api-key': '${process.env.API_KEY}'
+            'x-api-key': '${process.env.HERALDO_INTERNAL_TOKEN}'
         };
         const TEST_PHONE = '${process.env.MENSAJERO_PHONE || ''}';
 

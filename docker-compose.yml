@@ -11,6 +11,8 @@ services:
       - .env
     networks:
       - heraldo-network
+    environment:
+      - HERALDO_INTERNAL_TOKEN=${HERALDO_INTERNAL_TOKEN}
     restart: unless-stopped
     # ── MEMORY DISCIPLINE ──
     deploy:
@@ -32,6 +34,7 @@ services:
     env_file:
       - .env
     environment:
+      - HERALDO_INTERNAL_TOKEN=${HERALDO_INTERNAL_TOKEN}
       - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
       - EXTERNAL_PORT=${GESTOR_PORT:-8080}
     networks:

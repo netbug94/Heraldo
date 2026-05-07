@@ -58,8 +58,8 @@ fun Application.module() {
     }
 
     // ── CRITICAL FIX: The Stateless Cryptographic Seal ────────────
-    // Ktor grabs your API_KEY from the Docker .env to lock the session
-    val secretKey = System.getenv("API_KEY") ?: "fallback_super_secret_change_me_in_prod"
+    // Ktor grabs your HERALDO_INTERNAL_TOKEN from the Docker .env to lock the session
+    val secretKey = System.getenv("HERALDO_INTERNAL_TOKEN") ?: "fallback_super_secret_change_me_in_prod"
 
     // Auth: install Sessions plugin with our secret key
     installAuth(secretKey)
