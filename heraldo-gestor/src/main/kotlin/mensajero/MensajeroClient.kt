@@ -46,7 +46,9 @@ class MensajeroClient(
     }
 
     suspend fun sendMessage(title: String, description: String?): Boolean {
-        val header = template.replace("{title}", title.trim())
+        val header = template
+            .replace("{title}", title.trim())
+            .replace("%s", title.trim())
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
         val fullMessage = "$header$body"
 
