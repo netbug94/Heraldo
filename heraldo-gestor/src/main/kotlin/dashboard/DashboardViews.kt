@@ -1,11 +1,11 @@
 package com.netbug94.dashboard
 
 import com.netbug94.tasks.TaskData
-import kotlinx.serialization.json.Json
+import com.netbug94.tasks.TaskData
 
 internal object DashboardViews {
 
-    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?, currentTemplate: String): String {
+    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
         val taskListHtml = tasks.joinToString("") { task ->
             // Dark Souls thematic statuses
             val (statusClass, statusText, icon) = when {
@@ -67,7 +67,6 @@ internal object DashboardViews {
                             </div>
                         </div>
                         <div class="btn-group">
-                            <button onclick="openTemplateModal()" class="btn btn-secondary">Forge Decree</button>
                             <a href="/sync-zone" class="btn btn-secondary">Align to Stars</a>
                             <a href="/sync" class="btn">Stoke the Flame</a>
                         </div>
@@ -81,19 +80,6 @@ internal object DashboardViews {
                 </div>
                 
                 <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend">▲</button>
-
-                <!-- Gothic Modal -->
-                <div id="medieval-modal" class="modal-overlay">
-                    <div class="modal-content">
-                        <h3 id="modal-title">Forge New Decree</h3>
-                        <p id="modal-message"></p>
-                        <input type="text" id="modal-input" placeholder="Inscribe your will..." autocomplete="off">
-                        <div class="modal-actions">
-                            <button class="btn btn-secondary" onclick="closeModal()">Abandon</button>
-                            <button class="btn" onclick="confirmModal()">Inscribe</button>
-                        </div>
-                    </div>
-                </div>
                 
                 <script>
                     // WebSocket Logic
@@ -110,61 +96,6 @@ internal object DashboardViews {
                     window.addEventListener('scroll', () => {
                         btn.classList.toggle('visible', window.scrollY > 200);
                     }, { passive: true });
-
-                    // Custom Modal Logic
-                    function showModal(title, message, isPrompt, initialValue, callback) {
-                        document.getElementById('medieval-modal').style.display = 'flex';
-                        document.getElementById('modal-title').innerText = title;
-                        document.getElementById('modal-message').innerText = message;
-                        const input = document.getElementById('modal-input');
-                        
-                        if (isPrompt) {
-                            input.style.display = 'block';
-                            input.value = initialValue || '';
-                            input.focus();
-                        } else {
-                            input.style.display = 'none';
-                        }
-                        modalCallback = callback;
-                    }
-
-                    function closeModal() {
-                        document.getElementById('medieval-modal').style.display = 'none';
-                        modalCallback = null;
-                    }
-
-                    function confirmModal() {
-                        const input = document.getElementById('modal-input');
-                        const result = input.style.display === 'block' ? input.value.trim() : true;
-                        
-                        if (input.style.display === 'block' && !result) {
-                            input.focus();
-                            return; // Don't allow empty submission
-                        }
-                        
-                        closeModal();
-                        if (modalCallback) modalCallback(result);
-                    }
-
-                    function openTemplateModal() {
-                        const current = ${Json.encodeToString(currentTemplate)};
-                        showModal("Forge New Decree", "Inscribe the template for your WhatsApp notifications (use {title} or %s for the task name):", true, current, function(newTemplate) {
-                            if (newTemplate) {
-                                document.body.innerHTML = '<div style="background:#050505; color:#c87a2a; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif; letter-spacing: 6px; text-transform: uppercase;"><h2 style="font-weight: 400; text-shadow: 0 0 20px rgba(200, 122, 42, 0.4);">Inscribing Decree...</h2></div>';
-                                fetch('/sync-env', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ template: newTemplate })
-                                }).then(() => {
-                                    window.location.href = '/';
-                                }).catch(err => {
-                                    showModal("Curse", "The inscription failed: " + err, false, function() {
-                                        window.location.reload();
-                                    });
-                                });
-                            }
-                        });
-                    }
                 </script>
             </body>
             </html>
