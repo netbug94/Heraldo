@@ -4,7 +4,7 @@ import com.netbug94.tasks.TaskData
 
 internal object DashboardViews {
 
-    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
+    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?, currentTemplate: String): String {
         val taskListHtml = tasks.joinToString("") { task ->
             // Dark Souls thematic statuses
             val (statusClass, statusText, icon) = when {
@@ -47,7 +47,6 @@ internal object DashboardViews {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Heraldo Gestor - The Abyss</title>
-                <meta http-equiv="refresh" content="30">
                 <!-- Gothic Typography -->
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,9 +110,7 @@ internal object DashboardViews {
                     }, { passive: true });
 
                     // Custom Modal Logic
-                    let modalCallback = null;
-
-                    function showModal(title, message, isPrompt, callback) {
+                    function showModal(title, message, isPrompt, initialValue, callback) {
                         document.getElementById('medieval-modal').style.display = 'flex';
                         document.getElementById('modal-title').innerText = title;
                         document.getElementById('modal-message').innerText = message;
@@ -121,7 +118,7 @@ internal object DashboardViews {
                         
                         if (isPrompt) {
                             input.style.display = 'block';
-                            input.value = '';
+                            input.value = initialValue || '';
                             input.focus();
                         } else {
                             input.style.display = 'none';
@@ -148,7 +145,8 @@ internal object DashboardViews {
                     }
 
                     function openTemplateModal() {
-                        showModal("Forge New Decree", "Inscribe the words to be carried by the phantoms:", true, function(newTemplate) {
+                        const current = `${currentTemplate.replace("`", "\\`").replace("$", "\\$")}`;
+                        showModal("Forge New Decree", "Inscribe the template for your WhatsApp notifications (use {title} for the task name):", true, current, function(newTemplate) {
                             if (newTemplate) {
                                 document.body.innerHTML = '<div style="background:#050505; color:#c87a2a; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif; letter-spacing: 6px; text-transform: uppercase;"><h2 style="font-weight: 400; text-shadow: 0 0 20px rgba(200, 122, 42, 0.4);">Inscribing Decree...</h2></div>';
                                 fetch('/sync-env', {

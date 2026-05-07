@@ -83,8 +83,16 @@ export class WhatsAppManager {
 
     async sendMessage(to: string, text: string): Promise<boolean> {
         if (this.sessionState.status === 'CONNECTED' && this.client) {
+            const cleanNumber = to.replace('+', '');
+            logger.info(`Attempting to send message to: ${cleanNumber}`);
             try {
-                await this.client.sendMessage(`${to.replace('+', '')}@c.us`, text);
+                const numberId = await this.client.getNumberId(cleanNumber);
+                if (!numberId) {
+                    logger.error(`⚠️ Could not resolve WhatsApp ID for number ${cleanNumber}`);
+                    return false;
+                }
+                
+                await this.client.sendMessage(numberId._serialized, text);
                 logger.info(`✅ Message successfully delivered to ${to}`);
                 return true;
             } catch (e) {

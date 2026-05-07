@@ -26,7 +26,6 @@ class TaskRepository(
 ) {
 
     private val dailyCache = ConcurrentHashMap<String, TaskData>()
-    private var lastCheckedDate: LocalDate? = null
     private val cacheFile = File("./data/cache.json")
 
     @Volatile
@@ -75,30 +74,36 @@ class TaskRepository(
             val myRealNow = timezoneProvider.getMyLocalTime()
             val myRealToday = myRealNow.toLocalDate()
 
-            if (lastCheckedDate != null && lastCheckedDate != myRealToday) {
-                logger.info("📅 Date change detected! Clearing old tasks for $lastCheckedDate")
-                cacheMutex.withLock {
-                    val missedTasks = dailyCache.values.filter { !it.mensajeroDone && !it.id.startsWith("summary_") }
-                    dailyCache.clear()
-
-                    if (missedTasks.isNotEmpty()) {
-                        val count = missedTasks.size
-                        val listStr = missedTasks.joinToString("\n") { "• ${it.title}" }
-                        val summaryId = "summary_$myRealToday"
-
-                        dailyCache[summaryId] = TaskData(
-                            id = summaryId,
-                            taskListId = "NONE",
-                            title = "⚠️ $count Missed Tasks from Yesterday",
-                            description = "Server was down! Check Tasks site to clear them:\n$listStr",
-                            dueTime = summaryTaskTime,
-                            mensajeroDone = false
-                        )
-                        logger.info("📝 Created daily summary task for $count missed tasks, scheduled for $summaryTaskTime.")
-                    }
+            // === 0. MISSED TASKS LOGIC (From previous days) ===
+            cacheMutex.withLock {
+                val missedTasks = dailyCache.values.filter { 
+                    !it.mensajeroDone && !it.id.startsWith("summary_") && it.dueDate != null && it.dueDate < myRealToday 
                 }
+
+                if (missedTasks.isNotEmpty()) {
+                    val count = missedTasks.size
+                    val listStr = missedTasks.joinToString("\n") { "• ${it.title}" }
+                    val summaryId = "summary_$myRealToday"
+
+                    dailyCache[summaryId] = TaskData(
+                        id = summaryId,
+                        taskListId = "NONE",
+                        title = "⚠️ $count Missed Tasks from Previous Days",
+                        description = "Server was down! Check Tasks site to clear them:\n$listStr",
+                        dueTime = summaryTaskTime,
+                        mensajeroDone = false,
+                        dueDate = myRealToday
+                    )
+                    logger.info("📝 Created daily summary task for $count missed tasks, scheduled for $summaryTaskTime.")
+                }
+                
+                // Cleanup any stale tasks from previous days (missed ones were just summarized, others are done)
+                val staleIds = dailyCache.values.filter { 
+                    it.dueDate != null && it.dueDate < myRealToday && !it.id.startsWith("summary_")
+                }.map { it.id }
+                
+                staleIds.forEach { dailyCache.remove(it) }
             }
-            lastCheckedDate = myRealToday
 
             val taskLists = googleTasksClient.getTaskLists()
             val validTaskIdsForToday = mutableSetOf<String>()
@@ -121,7 +126,7 @@ class TaskRepository(
                     if (parsedTime == null) return@forEach
 
                     validTaskIdsForToday.add(task.id)
-                    syncTaskToCache(task.id, taskList.id, cleanTitle, task.notes, parsedTime)
+                    syncTaskToCache(task.id, taskList.id, cleanTitle, task.notes, parsedTime, myRealToday)
                 }
             }
 
@@ -153,7 +158,7 @@ class TaskRepository(
                     val eventId = "cal_${event.id}"
 
                     validTaskIdsForToday.add(eventId)
-                    syncTaskToCache(eventId, "CALENDAR", cleanTitle, event.description, eventLocalTime)
+                    syncTaskToCache(eventId, "CALENDAR", cleanTitle, event.description, eventLocalTime, myRealToday)
                 }
             } catch (e: Exception) {
                 logger.error("🚨 Calendar Sync Error: ${e.message}", e)
@@ -206,18 +211,19 @@ class TaskRepository(
         }
     }
 
-    private suspend fun syncTaskToCache(id: String, listId: String, title: String, notes: String?, time: LocalTime) {
+    private suspend fun syncTaskToCache(id: String, listId: String, title: String, notes: String?, time: LocalTime, date: LocalDate) {
         cacheMutex.withLock {
             val existing = dailyCache[id]
             if (existing == null) {
-                dailyCache[id] = TaskData(id, listId, title, notes, time)
+                dailyCache[id] = TaskData(id, listId, title, notes, time, dueDate = date)
                 logger.debug("DEBUG: Added -> [{}] {}", time, title)
-            } else if (existing.dueTime != time || existing.title != title || existing.description != notes) {
+            } else if (existing.dueTime != time || existing.title != title || existing.description != notes || existing.dueDate != date) {
                 dailyCache[id] = existing.copy(
                     title = title,
                     description = notes,
                     dueTime = time,
-                    mensajeroDone = if (existing.dueTime != time) false else existing.mensajeroDone
+                    dueDate = date,
+                    mensajeroDone = if (existing.dueTime != time || existing.dueDate != date) false else existing.mensajeroDone
                 )
                 logger.debug("DEBUG: Updated -> [{}] {}", time, title)
             }

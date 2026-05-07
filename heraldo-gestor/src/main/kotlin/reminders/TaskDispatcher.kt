@@ -92,6 +92,14 @@ class TaskDispatcher(
             val shouldTrigger = isTimeToTrigger || isLate
 
             if (shouldTrigger && !task.mensajeroDone) {
+                if (task.retryCount >= 5) {
+                    if (task.retryCount == 5) {
+                        logger.error("❌ Task '${task.title}' reached max retries (5). Giving up to prevent infinite loop.")
+                        repository.incrementRetryCount(task.id)
+                    }
+                    return@forEach
+                }
+
                 val displayTitle = if (isLate) {
                     "⚠️ PAST DUE\n⏰ Originally scheduled for: ${task.dueTime}\n\n${task.title}"
                 } else {
