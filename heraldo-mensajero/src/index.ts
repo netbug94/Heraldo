@@ -14,10 +14,10 @@ import { messagingRouter } from './features/messaging/routes.js';
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.HERALDO_INTERNAL_TOKEN;
 
 if (!API_KEY) {
-    logger.error("❌ FATAL: API_KEY is not defined!");
+    logger.error("❌ FATAL: HERALDO_INTERNAL_TOKEN is not defined!");
     process.exit(1);
 }
 

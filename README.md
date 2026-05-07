@@ -28,7 +28,7 @@ Create your environment file from the provided template:
 cp .env.example .env
 ```
 Open `.env` and fill in your details:
-- `API_KEY` and `MENSAJERO_API_KEY`: Generate a random secure string (e.g., `openssl rand -hex 32`) and paste the exact same string in both fields.
+- `API_KEY` and `HERALDO_INTERNAL_TOKEN`: Generate a random secure string (e.g., `openssl rand -hex 32`) and paste the exact same string in both fields.
 - `MENSAJERO_PHONE`: Your target WhatsApp number (include country code, e.g., `+52...`).
 - `GIST_TIMEZONE_URL`: The **Raw** URL to your timezone GitHub Gist (make sure the URL ends with `/raw`).
 

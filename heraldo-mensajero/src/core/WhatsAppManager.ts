@@ -22,7 +22,7 @@ export class WhatsAppManager {
     }
 
     private pingGestor() {
-        const API_KEY = process.env.MENSAJERO_API_KEY || '';
+        const API_KEY = process.env.HERALDO_INTERNAL_TOKEN || '';
 
         fetch(GESTOR_WEBHOOK_URL, {
             method: 'POST',
