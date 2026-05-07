@@ -1,7 +1,6 @@
 package com.netbug94.dashboard
 
 import com.netbug94.tasks.TaskData
-import com.netbug94.tasks.TaskData
 
 internal object DashboardViews {
 
