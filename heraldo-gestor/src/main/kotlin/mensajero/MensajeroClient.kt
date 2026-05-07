@@ -22,12 +22,6 @@ class MensajeroClient(
 
     fun getTemplate(): String = template
 
-    fun updateTemplate(newTemplate: String) {
-        this.template = newTemplate
-        settingsRepository.updateMensajeroTemplate(newTemplate)
-        logger.info("🔄 Message Template updated and persisted: $template")
-    }
-
     suspend fun isHealthy(): Boolean {
         return try {
             val response: HttpResponse = client.get("$baseUrl/health") {

@@ -21,9 +21,6 @@ import java.time.format.DateTimeFormatter
 
 private val connections = CopyOnWriteArraySet<WebSocketSession>()
 
-@Serializable
-data class TemplateUpdateRequest(val template: String)
-
 fun Application.dashboardRoutes() {
 
     val repository by inject<TaskRepository>()
@@ -72,9 +69,8 @@ fun Application.dashboardRoutes() {
                 val formattedTime = userTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
                 val authLink = googleTasksClient.pendingAuthUrl
-                val currentTemplate = mensajeroClient.getTemplate()
 
-                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink, currentTemplate)
+                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
                 call.respondText(html, ContentType.Text.Html)
             }
 
@@ -87,13 +83,6 @@ fun Application.dashboardRoutes() {
             get("/sync-zone") {
                 timezoneProvider.forceRefresh()
                 val html = DashboardViews.renderLoadingState("Aligning Astrolabe...")
-                call.respondText(html, ContentType.Text.Html)
-            }
-
-            post("/sync-env") {
-                val request = call.receive<TemplateUpdateRequest>()
-                mensajeroClient.updateTemplate(request.template)
-                val html = DashboardViews.renderLoadingState("The Ravens have been Dispatched!")
                 call.respondText(html, ContentType.Text.Html)
             }
 

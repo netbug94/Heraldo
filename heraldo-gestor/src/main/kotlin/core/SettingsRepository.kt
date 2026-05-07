@@ -9,7 +9,7 @@ private val logger = LoggerFactory.getLogger("com.netbug94.core.SettingsReposito
 
 @Serializable
 data class AppSettings(
-    val mensajeroTemplate: String? = null
+    val lastSync: String? = null
 )
 
 class SettingsRepository(
@@ -53,11 +53,6 @@ class SettingsRepository(
     }
 
     fun getMensajeroTemplate(fallback: String): String {
-        return currentSettings.mensajeroTemplate ?: fallback
-    }
-
-    fun updateMensajeroTemplate(newTemplate: String) {
-        currentSettings = currentSettings.copy(mensajeroTemplate = newTemplate)
-        saveSettings()
+        return fallback
     }
 }
