@@ -14,12 +14,12 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.consumeEach
-import java.util.Collections
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import java.time.format.DateTimeFormatter
 
-private val connections = Collections.synchronizedSet(mutableSetOf<WebSocketSession>())
+private val connections = CopyOnWriteArraySet<WebSocketSession>()
 
 @Serializable
 data class TemplateUpdateRequest(val template: String)
@@ -72,8 +72,9 @@ fun Application.dashboardRoutes() {
                 val formattedTime = userTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
 
                 val authLink = googleTasksClient.pendingAuthUrl
+                val currentTemplate = mensajeroClient.getTemplate()
 
-                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink)
+                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink, currentTemplate)
                 call.respondText(html, ContentType.Text.Html)
             }
 
@@ -106,17 +107,17 @@ fun Application.dashboardRoutes() {
                     connections -= this
                 }
             }
+        }
 
-            post("/webhook/mensajero") {
-                connections.forEach {
-                    try {
-                        it.send("RELOAD")
-                    } catch (_: Exception) {
-                        // Ignore dead sockets
-                    }
+        post("/webhook/mensajero") {
+            connections.forEach {
+                try {
+                    it.send("RELOAD")
+                } catch (_: Exception) {
+                    // Ignore dead sockets
                 }
-                call.respond(HttpStatusCode.OK)
             }
+            call.respond(HttpStatusCode.OK)
         }
     }
 }

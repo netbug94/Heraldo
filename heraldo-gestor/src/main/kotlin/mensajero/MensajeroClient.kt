@@ -18,6 +18,8 @@ class MensajeroClient(
 ) {
     private val cleanPhone = phoneNumber.replace(Regex("[^0-9]"), "")
 
+    fun getTemplate(): String = template
+
     fun updateTemplate(newTemplate: String) {
         this.template = newTemplate
         logger.info("🔄 Message Template updated: $template")
