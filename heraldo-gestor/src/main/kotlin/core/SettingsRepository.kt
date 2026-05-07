@@ -13,7 +13,7 @@ data class AppSettings(
 )
 
 class SettingsRepository(
-    private val settingsFile: File = File("./data/settings.json")
+    private val settingsFile: File = File("./config/settings.json")
 ) {
     private var currentSettings: AppSettings = AppSettings()
 

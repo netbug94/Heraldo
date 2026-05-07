@@ -1,6 +1,7 @@
 package com.netbug94.dashboard
 
 import com.netbug94.tasks.TaskData
+import kotlinx.serialization.json.Json
 
 internal object DashboardViews {
 
@@ -146,7 +147,7 @@ internal object DashboardViews {
                     }
 
                     function openTemplateModal() {
-                        const current = `${currentTemplate.replace("`", "\\`").replace("$", "\\$")}`;
+                        const current = ${Json.encodeToString(currentTemplate)};
                         showModal("Forge New Decree", "Inscribe the template for your WhatsApp notifications (use {title} or %s for the task name):", true, current, function(newTemplate) {
                             if (newTemplate) {
                                 document.body.innerHTML = '<div style="background:#050505; color:#c87a2a; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif; letter-spacing: 6px; text-transform: uppercase;"><h2 style="font-weight: 400; text-shadow: 0 0 20px rgba(200, 122, 42, 0.4);">Inscribing Decree...</h2></div>';
