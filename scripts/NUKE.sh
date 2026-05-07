@@ -1,6 +1,7 @@
 #!/bin/bash
 # Wipes all Docker data for a total reset.
 cd ..
+docker compose down
 # Finds and kills locks in the project folders (tokens/config)
 sudo find . -name "SingletonLock" -delete
 docker system prune -a --volumes -f
