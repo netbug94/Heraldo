@@ -333,6 +333,7 @@ export const getDashboardHtml = () => `
             'Content-Type': 'application/json',
             'x-api-key': '${process.env.API_KEY}'
         };
+        const TEST_PHONE = '${process.env.MENSAJERO_PHONE || ''}';
 
         // ── Engine status bar ──────────────────────────────────────
         function setEngineBar(status) {
@@ -415,6 +416,9 @@ export const getDashboardHtml = () => `
                         <input id="test-msg" type="text" placeholder="Inscribe a phantom message..." />
                         <button id="send-btn" onclick="sendTest()">Invoke</button>
                     </div>
+                    <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; font-style: italic;">
+                        \${TEST_PHONE ? 'Targeting: ' + TEST_PHONE : '⚠️ No MENSAJERO_PHONE configured'}
+                    </div>
                     <button class="btn btn-danger" onclick="stopEngine()">Sever the Link</button>
                 </div>
             \`;
@@ -450,13 +454,17 @@ export const getDashboardHtml = () => `
             const btn   = document.getElementById('send-btn');
             const msg   = input?.value.trim();
             if (!msg) return;
+            if (!TEST_PHONE) {
+                alert('The abyss is silent: No MENSAJERO_PHONE defined in .env');
+                return;
+            }
             btn.textContent = 'Invoking...';
             btn.disabled = true;
             try {
                 await fetch('/api/sendText', {
                     method: 'POST',
                     headers: API_HEADERS,
-                    body: JSON.stringify({ chatId: '', text: msg })
+                    body: JSON.stringify({ chatId: TEST_PHONE, text: msg })
                 });
             } finally {
                 if (input) input.value = '';
