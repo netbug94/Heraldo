@@ -35,7 +35,7 @@ internal object DashboardViews {
                     <h3>The Covenant is Broken</h3>
                     <p>Background sync is severed. Offer your sigil (Google Auth) to restore the link.</p>
                 </div>
-                <a href="$authLink" target="_blank" class="btn-auth">Restore Covenant</a>
+                <a href="$authLink" target="_blank" class="btn-auth">Renew the Oath</a>
             </div>
             """
         } else ""
@@ -66,7 +66,7 @@ internal object DashboardViews {
                         </div>
                         <div class="btn-group">
                             <button onclick="openTemplateModal()" class="btn btn-secondary">Forge Decree</button>
-                            <a href="/sync-zone" class="btn btn-secondary">Align Abyss</a>
+                            <a href="/sync-zone" class="btn btn-secondary">Align to Stars</a>
                             <a href="/sync" class="btn">Stoke the Flame</a>
                         </div>
                     </div>
@@ -146,7 +146,7 @@ internal object DashboardViews {
 
                     function openTemplateModal() {
                         const current = `${currentTemplate.replace("`", "\\`").replace("$", "\\$")}`;
-                        showModal("Forge New Decree", "Inscribe the template for your WhatsApp notifications (use {title} for the task name):", true, current, function(newTemplate) {
+                        showModal("Forge New Decree", "Inscribe the template for your WhatsApp notifications (use {title} or %s for the task name):", true, current, function(newTemplate) {
                             if (newTemplate) {
                                 document.body.innerHTML = '<div style="background:#050505; color:#c87a2a; display:flex; justify-content:center; align-items:center; height:100vh; font-family:\'Cinzel\', serif; letter-spacing: 6px; text-transform: uppercase;"><h2 style="font-weight: 400; text-shadow: 0 0 20px rgba(200, 122, 42, 0.4);">Inscribing Decree...</h2></div>';
                                 fetch('/sync-env', {
@@ -173,8 +173,8 @@ internal object DashboardViews {
     fun renderLoadingState(message: String): String {
         val (clearMessage, colorClass) = when(message) {
             "Summoning Decrees..." -> "SUMMONING PHANTOMS" to "#c87a2a" // Bonfire Gold
-            "Aligning Astrolabe..." -> "ALIGNING THE ABYSS" to "#8a867e" // Ash Gray
-            "The Ravens have been Dispatched!" -> "DECREE FORGED" to "#7a1a1a" // Blood Red
+            "Aligning Astrolabe..." -> "CELESTIAL ALIGNMENT" to "#8a867e" // Ash Gray
+            "The Ravens have been Dispatched!" -> "DECREE INSCRIBED" to "#7a1a1a" // Blood Red
             else -> message.uppercase() to "#c87a2a"
         }
 
