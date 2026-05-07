@@ -83,7 +83,12 @@ export class WhatsAppManager {
 
     async sendMessage(to: string, text: string): Promise<boolean> {
         if (this.sessionState.status === 'CONNECTED' && this.client) {
-            const cleanNumber = to.replace('+', '');
+            const cleanNumber = to.replace(/\D/g, '');
+            if (!cleanNumber) {
+                logger.error(`⚠️ Cannot send message: recipient number is empty or invalid.`);
+                return false;
+            }
+
             logger.info(`Attempting to send message to: ${cleanNumber}`);
             try {
                 const numberId = await this.client.getNumberId(cleanNumber);
@@ -93,10 +98,10 @@ export class WhatsAppManager {
                 }
                 
                 await this.client.sendMessage(numberId._serialized, text);
-                logger.info(`✅ Message successfully delivered to ${to}`);
+                logger.info(`✅ Message successfully delivered to ${cleanNumber}`);
                 return true;
-            } catch (e) {
-                logger.error(`⚠️ Send failed. Error: ${e}`);
+            } catch (e: any) {
+                logger.error(`⚠️ Send failed. Error: ${e?.message || e}`);
                 return false;
             }
         }
