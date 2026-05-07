@@ -464,17 +464,30 @@ export const getDashboardHtml = () => `
         }
 
         // ── Polling loop ───────────────────────────────────────────
+        let lastStatus = null;
+        let lastQr = null;
+
         async function update() {
             try {
                 const res    = await fetch('/api/status');
                 const data   = await res.json();
                 const status = data.session?.status;
+                const qr     = data.session?.qrCode;
 
-                if      (status === 'CONNECTED')   renderConnected();
-                else if (status === 'AWAITING_QR') renderQR(data.session?.qrCode);
-                else if (status === 'STARTING')    renderStarting();
-                else if (status === 'AUTH_FAILED') renderAuthFailed();
-                else                               renderOffline(data.session?.reason);
+                // Only re-render if the status changed, OR if we are in QR mode and the code changed
+                const statusChanged = status !== lastStatus;
+                const qrChanged = status === 'AWAITING_QR' && qr !== lastQr;
+
+                if (statusChanged || qrChanged) {
+                    if      (status === 'CONNECTED')   renderConnected();
+                    else if (status === 'AWAITING_QR') renderQR(qr);
+                    else if (status === 'STARTING')    renderStarting();
+                    else if (status === 'AUTH_FAILED') renderAuthFailed();
+                    else                               renderOffline(data.session?.reason);
+                    
+                    lastStatus = status;
+                    lastQr = qr;
+                }
             } catch (e) {
                 console.error('The abyss stares back (poll failed)', e);
             }
