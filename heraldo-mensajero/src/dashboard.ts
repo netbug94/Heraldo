@@ -1,17 +1,6 @@
-// Type declarations for QRCode library loaded via CDN
-interface QRCodeOptions {
-    text: string;
-    width?: number;
-    height?: number;
-    colorDark?: string;
-    colorLight?: string;
-    correctLevel?: number;
-}
-declare class QRCode {
-    static CorrectLevel: { L: number; M: number; Q: number; H: number };
-    constructor(container: HTMLElement | null, options: string | QRCodeOptions);
-}
-declare const process: { env: { API_KEY?: string } };
+// Type declarations for QRCode library are not strictly needed here as they are inside the HTML string,
+// but we'll keep the process.env access clean by letting Node.js types handle it.
+
 
 export const getDashboardHtml = () => `
 <!DOCTYPE html>
