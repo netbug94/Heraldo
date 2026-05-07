@@ -4,7 +4,7 @@ import com.netbug94.auth.authRoutes
 import com.netbug94.auth.installAuth
 import com.netbug94.core.appModule
 import com.netbug94.reminders.TaskDispatcher
-import com.netbug94.dashboard.dashboardRoutes // Make sure this is imported!
+import com.netbug94.dashboard.dashboardRoutes
 import io.ktor.server.application.*
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.http.content.staticResources
@@ -57,8 +57,14 @@ fun Application.module() {
         masking = false
     }
 
-    // Auth: install Sessions plugin + register /login, /logout
-    installAuth()
+    // ── CRITICAL FIX: The Stateless Cryptographic Seal ────────────
+    // Ktor grabs your API_KEY from the Docker .env to lock the session
+    val secretKey = System.getenv("API_KEY") ?: "fallback_super_secret_change_me_in_prod"
+
+    // Auth: install Sessions plugin with our secret key
+    installAuth(secretKey)
+    // ──────────────────────────────────────────────────────────────
+
     authRoutes()
 
     routing {

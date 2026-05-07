@@ -1,17 +1,17 @@
+// src/core/WhatsAppManager.ts
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 type WAClient = InstanceType<typeof Client>;
 import qrcode from 'qrcode-terminal';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
 
-// Workaround for __dirname in ES Modules (NodeNext)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const SESSIONS_DIR = path.join(__dirname, '../sessions');
+// ── Configuration ─────────────────────────────────────────────────────────────
+// In Docker, point this to '/sessions' via environment variables.
+// Fallback to a 'sessions' folder in the current working directory for local dev.
+const SESSIONS_DIR = process.env.SESSIONS_DIR || path.join(process.cwd(), 'sessions');
+const GESTOR_WEBHOOK_URL = process.env.GESTOR_WEBHOOK_URL || 'http://gestor:8080/webhook/mensajero';
 
 export class WhatsAppManager {
     private client: WAClient | null = null;
@@ -21,6 +21,14 @@ export class WhatsAppManager {
         if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
     }
 
+    private pingGestor() {
+        const API_KEY = process.env.MENSAJERO_API_KEY || '';
+
+        fetch(GESTOR_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'x-api-key': API_KEY } // Present the credential
+        }).catch((err) => logger.warn(`📡 Failed to ping Gestor: ${err.message}`));
+    }
     async initAccount() {
         // Clear deadlocks to prevent startup hangs in Docker containers
         const lockPath = path.join(SESSIONS_DIR, `session-primary`, 'SingletonLock');
@@ -35,15 +43,17 @@ export class WhatsAppManager {
         const client = new Client({
             authStrategy: new LocalAuth({ clientId: 'primary', dataPath: SESSIONS_DIR }),
             puppeteer: {
-                // Priority: Docker Env > Standard Linux Path > Local OS Default
                 executablePath: process.env.PUPPETEER_EXECUTABLE_PATH ||
                     (process.platform === 'linux' ? '/usr/bin/chromium' : undefined),
                 headless: true,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage', // Recommended for Docker[cite: 3]
-                    '--disable-extensions'
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--no-zygote' // Extra stability flags for headless Chromium in Docker
                 ]
             }
         });
@@ -51,33 +61,49 @@ export class WhatsAppManager {
         client.on('qr', (qr) => {
             this.sessionState = { status: 'AWAITING_QR', qrCode: qr };
             qrcode.generate(qr, { small: true });
+            this.pingGestor(); // Let the dashboard know we need a scan
         });
 
         client.on('ready', () => {
             this.sessionState = { status: 'CONNECTED' };
             this.client = client;
-            logger.info(`✅ Primary Session Connected`);
-            fetch('http://gestor:8080/webhook/mensajero', { method: 'POST' }).catch(() => {});
+            logger.info(`✅ Primary Session Connected (The Flame is Kindled)`);
+            this.pingGestor();
         });
 
         client.on('disconnected', (reason) => {
             logger.error(`❌ Disconnected. Reason: ${reason}`);
             this.sessionState = { status: 'OFFLINE', reason };
-            client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
-            this.client = null;
-            fetch('http://gestor:8080/webhook/mensajero', { method: 'POST' }).catch(() => {});
+
+            // Clean up the dead client instance
+            if (this.client) {
+                this.client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
+                this.client = null;
+            }
+
+            this.pingGestor();
+
+            // Auto-heal: Try to reconnect after 10 seconds
+            setTimeout(() => {
+                logger.info("🔄 Auto-healing: Attempting to reconnect WhatsApp...");
+                this.initAccount().catch(err => logger.error(`🚨 Reconnect failed: ${err}`));
+            }, 10000);
         });
 
-        client.on('auth_failure', (msg) => {
-            logger.error(`⚠️ Auth Failure: ${msg}`);
+        client.on('auth_failure', async (msg) => {
+            logger.error(`⚠️ Auth Failure: ${msg}. The sigil was rejected.`);
             this.sessionState = { status: 'AUTH_FAILED' };
+
+            // CRITICAL FIX: Delete corrupted session data so it doesn't get stuck in a boot loop
+            await this.deleteAccount();
+            this.pingGestor();
         });
 
         try {
             await client.initialize();
         } catch (err) {
-            logger.error(`🚨 Failed to initialize client: ${err}`);
-            this.sessionState = { status: 'OFFLINE' };
+            logger.error(`🚨 Failed to initialize Puppeteer/WhatsApp client: ${err}`);
+            this.sessionState = { status: 'OFFLINE', reason: 'Initialization crash' };
         }
     }
 
@@ -96,7 +122,7 @@ export class WhatsAppManager {
                     logger.error(`⚠️ Could not resolve WhatsApp ID for number ${cleanNumber}`);
                     return false;
                 }
-                
+
                 await this.client.sendMessage(numberId._serialized, text);
                 logger.info(`✅ Message successfully delivered to ${cleanNumber}`);
                 return true;
@@ -125,7 +151,8 @@ export class WhatsAppManager {
             await this.client.destroy().catch((e: any) => logger.error(`Cleanup failed: ${e}`));
             this.client = null;
         }
-        this.sessionState = { status: 'OFFLINE', reason: 'Killed via Dashboard' };
+        this.sessionState = { status: 'OFFLINE', reason: 'Session data purged' };
+
         const sessionFolder = path.join(SESSIONS_DIR, `session-primary`);
         if (fs.existsSync(sessionFolder)) {
             fs.rmSync(sessionFolder, { recursive: true, force: true });

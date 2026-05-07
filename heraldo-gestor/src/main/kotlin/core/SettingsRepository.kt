@@ -42,16 +42,6 @@ class SettingsRepository(
         ignoreUnknownKeys = true
     }
 
-    private fun saveSettings() {
-        try {
-            val jsonStr = json.encodeToString(AppSettings.serializer(), currentSettings)
-            settingsFile.writeText(jsonStr)
-            logger.info("💾 Settings persisted to disk.")
-        } catch (e: Exception) {
-            logger.error("🚨 Failed to save settings: ${e.message}")
-        }
-    }
-
     fun getMensajeroTemplate(fallback: String): String {
         return fallback
     }

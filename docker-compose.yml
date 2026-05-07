@@ -12,6 +12,13 @@ services:
     networks:
       - heraldo-network
     restart: unless-stopped
+    # ── MEMORY DISCIPLINE ──
+    deploy:
+      resources:
+        limits:
+          memory: 512M    # Ceiling for Puppeteer/Chrome
+        reservations:
+          memory: 256M    # Guaranteed minimum
 
   gestor:
     build:
@@ -32,6 +39,13 @@ services:
     depends_on:
       - mensajero
     restart: unless-stopped
+    # ── MEMORY DISCIPLINE ──
+    deploy:
+      resources:
+        limits:
+          memory: 384M    # Balanced for your -Xmx256m JVM heap
+        reservations:
+          memory: 128M    # Guaranteed minimum
 
 networks:
   heraldo-network:

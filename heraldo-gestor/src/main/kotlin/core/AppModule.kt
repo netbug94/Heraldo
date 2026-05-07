@@ -50,7 +50,7 @@ val appModule = module {
         val defaultTemplate = config.propertyOrNull("app.mensajero.template")?.getString() ?: MensajeroClient.DEFAULT_TEMPLATE
         val template = settings.getMensajeroTemplate(defaultTemplate)
 
-        MensajeroClient(get(), phone, apiKey, baseUrl, template, settings)
+        MensajeroClient(get(), phone, apiKey, baseUrl, template)
     }
 
     single {

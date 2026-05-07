@@ -26,12 +26,10 @@ class TaskRepository(
 ) {
 
     private val dailyCache = ConcurrentHashMap<String, TaskData>()
-    private val cacheFile = File("./data/cache.json")
+    private val cacheFile = File("./config/cache.json")
 
     @Volatile
     private var isTokenRevoked = false
-
-    // Kotlin standard for coroutine concurrency
     private val cacheMutex = Mutex()
 
     init {
@@ -45,39 +43,37 @@ class TaskRepository(
                 if (jsonStr.isNotBlank()) {
                     val saved = Json.decodeFromString<Map<String, TaskData>>(jsonStr)
                     dailyCache.putAll(saved)
-                    logger.info("💾 Loaded ${dailyCache.size} tasks from local disk storage.")
+                    logger.info("💾 Loaded ${dailyCache.size} tasks from persisted storage.")
                 }
             } else {
                 cacheFile.parentFile?.mkdirs()
             }
         } catch (e: Exception) {
-            logger.error("🚨 Failed to load cache from disk: ${e.message}", e)
+            logger.error("🚨 Failed to load cache: ${e.message}")
         }
     }
 
     private suspend fun persistState() {
         try {
-            // Lock the state to serialize it safely
             val jsonStr = cacheMutex.withLock { Json.encodeToString(dailyCache.toMap()) }
-            // Write to disk on the IO thread so Ktor isn't frozen
             withContext(Dispatchers.IO) {
                 cacheFile.writeText(jsonStr)
             }
         } catch (e: Exception) {
-            logger.error("🚨 Failed to persist cache to disk: ${e.message}", e)
+            logger.error("🚨 Failed to persist cache: ${e.message}")
         }
     }
 
     suspend fun fetchTodayTasks() {
-        logger.info("Repository: Fetching tasks from Google Tasks and Calendar...")
+        logger.info("Repository: Summoning decrees from Google...")
         try {
             val myRealNow = timezoneProvider.getMyLocalTime()
             val myRealToday = myRealNow.toLocalDate()
 
-            // === 0. MISSED TASKS LOGIC (From previous days) ===
+            // === 0. MISSED TASKS LOGIC (The "Yesterday" Chamber) ===
             cacheMutex.withLock {
-                val missedTasks = dailyCache.values.filter { 
-                    !it.mensajeroDone && !it.id.startsWith("summary_") && it.dueDate != null && it.dueDate < myRealToday 
+                val missedTasks = dailyCache.values.filter {
+                    !it.mensajeroDone && !it.id.startsWith("summary_") && it.dueDate != null && it.dueDate < myRealToday
                 }
 
                 if (missedTasks.isNotEmpty()) {
@@ -89,38 +85,32 @@ class TaskRepository(
                         id = summaryId,
                         taskListId = "NONE",
                         title = "⚠️ $count Missed Tasks from Previous Days",
-                        description = "Server was down! Check Tasks site to clear them:\n$listStr",
+                        description = "The server has returned. These tasks were left in the fog:\n$listStr",
                         dueTime = summaryTaskTime,
                         mensajeroDone = false,
                         dueDate = myRealToday
                     )
-                    logger.info("📝 Created daily summary task for $count missed tasks, scheduled for $summaryTaskTime.")
                 }
-                
-                // Cleanup any stale tasks from previous days (missed ones were just summarized, others are done)
-                val staleIds = dailyCache.values.filter { 
+
+                // Clean up old items that aren't the current summary
+                val staleIds = dailyCache.values.filter {
                     it.dueDate != null && it.dueDate < myRealToday && !it.id.startsWith("summary_")
                 }.map { it.id }
-                
+
                 staleIds.forEach { dailyCache.remove(it) }
             }
 
             val taskLists = googleTasksClient.getTaskLists()
             val validTaskIdsForToday = mutableSetOf<String>()
 
-            // === 1. GOOGLE TASKS LOGIC ===
+            // === 1. GOOGLE TASKS ===
             for (taskList in taskLists) {
-                val tasks = googleTasksClient.getTasks(taskList.id)
-
-                tasks.forEach { task ->
+                googleTasksClient.getTasks(taskList.id).forEach { task ->
                     val rawTitle = task.title ?: return@forEach
                     val dueString = task.due ?: return@forEach
 
-                    val dueDateLocal = runCatching {
-                        LocalDate.parse(dueString.take(10))
-                    }.getOrNull()
-
-                    if (dueDateLocal == null || dueDateLocal != myRealToday) return@forEach
+                    val dueDateLocal = runCatching { LocalDate.parse(dueString.take(10)) }.getOrNull()
+                    if (dueDateLocal != myRealToday) return@forEach
 
                     val (parsedTime, cleanTitle) = parseTaskTitle(rawTitle)
                     if (parsedTime == null) return@forEach
@@ -130,85 +120,55 @@ class TaskRepository(
                 }
             }
 
-            // === 2. GOOGLE CALENDAR LOGIC ===
+            // === 2. GOOGLE CALENDAR ===
             try {
                 val startOfDay = myRealToday.atStartOfDay(myRealNow.zone)
-                val endOfDay = startOfDay.plusDays(1).minusNanos(1)
-
-                val calendarEvents = googleCalendarClient.getTodayEvents(startOfDay, endOfDay)
+                val calendarEvents = googleCalendarClient.getTodayEvents(startOfDay, startOfDay.plusDays(1).minusNanos(1))
 
                 for (event in calendarEvents) {
                     val eventLocalTime: LocalTime
                     val titlePrefix: String
 
                     if (event.start?.dateTime != null) {
-                        val eventTimeMs = event.start.dateTime.value
-                        eventLocalTime = java.time.Instant.ofEpochMilli(eventTimeMs)
-                            .atZone(myRealNow.zone)
-                            .toLocalTime()
+                        eventLocalTime = java.time.Instant.ofEpochMilli(event.start.dateTime.value)
+                            .atZone(myRealNow.zone).toLocalTime()
                         titlePrefix = "🗓️"
-                    } else if (event.start?.date != null) {
+                    } else {
                         eventLocalTime = allDayMensajeroTime
                         titlePrefix = "🌅 [All Day]"
-                    } else {
-                        continue
                     }
 
-                    val cleanTitle = "$titlePrefix ${event.summary ?: "Busy"}"
                     val eventId = "cal_${event.id}"
-
                     validTaskIdsForToday.add(eventId)
-                    syncTaskToCache(eventId, "CALENDAR", cleanTitle, event.description, eventLocalTime, myRealToday)
+                    syncTaskToCache(eventId, "CALENDAR", "$titlePrefix ${event.summary ?: "Busy"}", event.description, eventLocalTime, myRealToday)
                 }
-            } catch (e: Exception) {
-                logger.error("🚨 Calendar Sync Error: ${e.message}", e)
-            }
+            } catch (e: Exception) { logger.error("🚨 Calendar Sync Error: ${e.message}") }
 
-            // === 3. CLEANUP LOGIC ===
+            // === 3. CLEANUP ===
             cacheMutex.withLock {
                 val deletedIds = dailyCache.keys - validTaskIdsForToday
                 deletedIds.forEach { id ->
                     if (id.startsWith("summary_")) return@forEach
-
-                    val task = dailyCache[id]
-                    if (task?.mensajeroDone != true) {
-                        dailyCache.remove(id)
-                        logger.debug("DEBUG: Removed -> ${task?.title}")
-                    }
+                    if (dailyCache[id]?.mensajeroDone != true) dailyCache.remove(id)
                 }
             }
 
-            logger.info("Repository: Tracking ${dailyCache.size} active tasks/events.")
             persistState()
-            
-            // If we successfully fetched, the token is good
             isTokenRevoked = false
 
         } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
             if (e.statusCode == 401 && !isTokenRevoked) {
-                logger.error("🚨 GOOGLE TOKEN EXPIRED OR REVOKED!")
                 isTokenRevoked = true
-                
-                // Clear the cached services
                 googleTasksClient.clearTokens()
                 googleCalendarClient.clearService()
 
-                // Send the WhatsApp Alert
-                mensajeroClient.sendMessage(
-                    "🚨 ACTION REQUIRED: Google Token Expired",
-                    "Your Google API Token has been revoked or expired.\n\nPlease open your Heraldo Ktor Dashboard immediately to re-authenticate and resume automation."
-                )
+                mensajeroClient.sendMessage("🚨 ACTION REQUIRED: Google Token Expired", "Please open the Dashboard to renew the oath.")
 
-                // Trigger the re-auth flow in the background so the dashboard URL generates
                 kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                     googleTasksClient.triggerReauth()
                 }
-            } else if (e.statusCode != 401) {
-                logger.error("🚨 Google API Error: ${e.message}")
             }
-        } catch (e: Exception) {
-            logger.error("🚨 Repository Error: ${e.message}", e)
-        }
+        } catch (e: Exception) { logger.error("🚨 Repository Error: ${e.message}") }
     }
 
     private suspend fun syncTaskToCache(id: String, listId: String, title: String, notes: String?, time: LocalTime, date: LocalDate) {
@@ -216,16 +176,11 @@ class TaskRepository(
             val existing = dailyCache[id]
             if (existing == null) {
                 dailyCache[id] = TaskData(id, listId, title, notes, time, dueDate = date)
-                logger.debug("DEBUG: Added -> [{}] {}", time, title)
             } else if (existing.dueTime != time || existing.title != title || existing.description != notes || existing.dueDate != date) {
                 dailyCache[id] = existing.copy(
-                    title = title,
-                    description = notes,
-                    dueTime = time,
-                    dueDate = date,
+                    title = title, description = notes, dueTime = time, dueDate = date,
                     mensajeroDone = if (existing.dueTime != time || existing.dueDate != date) false else existing.mensajeroDone
                 )
-                logger.debug("DEBUG: Updated -> [{}] {}", time, title)
             }
         }
     }
@@ -241,14 +196,9 @@ class TaskRepository(
 
     suspend fun completeTaskInGoogle(taskListId: String, taskId: String) {
         if (taskListId == "NONE" || taskListId == "CALENDAR") return
-
         try {
-            logger.info("⏳ Completing task '$taskId' in Google...")
             googleTasksClient.completeTask(taskListId, taskId)
-            logger.info("✅ Google Tasks: Marked '$taskId' as completed.")
-        } catch (t: Throwable) {
-            logger.error("❌ FATAL Google Tasks Error: ${t.javaClass.simpleName} - ${t.message}", t)
-        }
+        } catch (t: Throwable) { logger.error("❌ Google Tasks Completion Error: ${t.message}") }
     }
 
     suspend fun incrementRetryCount(taskId: String): Int {
