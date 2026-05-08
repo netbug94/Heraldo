@@ -7,6 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class TaskParserTests {
+
     @Test
     fun `parses valid time and title correctly`() {
         val (time, title) = parseTaskTitle("[09:30] Morning meeting")
