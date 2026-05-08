@@ -7,8 +7,7 @@ import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.days
 
-// ── Session data class ────────────────────────────────────────────────────────
-// We store the username and an expiration timestamp directly in the cookie.
+// Store the username and an expiration timestamp directly in the cookie.
 @Serializable
 data class HeraldoSession(val username: String, val expiresAt: Long)
 
@@ -29,14 +28,12 @@ fun Application.installAuth(secretKey: String) {
             cookie.maxAgeInSeconds = COOKIE_MAX_AGE.inWholeSeconds
             cookie.extensions["SameSite"] = "Lax"
 
-            // This cryptographically signs the cookie.
-            // If anyone tampers with it, Ktor will reject it.
+            // This cryptographically signs the cookie; If anyone tampers with it, Ktor will reject it.
             transform(SessionTransportTransformerMessageAuthentication(signKey))
         }
     }
 }
 
-// ── requireAuth helper ────────────────────────────────────────────────────────
 fun Route.requireAuth(build: Route.() -> Unit): Route {
     val guardRoute = createChild(object : RouteSelector() {
         override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
@@ -49,7 +46,7 @@ fun Route.requireAuth(build: Route.() -> Unit): Route {
 
             // Check if session is missing OR expired
             if (session == null || now > session.expiresAt) {
-                call.sessions.clear<HeraldoSession>() // Clean up if expired
+                call.sessions.clear<HeraldoSession>()
                 call.respondRedirect("/login")
             }
         }

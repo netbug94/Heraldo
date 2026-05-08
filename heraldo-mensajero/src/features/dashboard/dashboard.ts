@@ -2,7 +2,6 @@
 // Type declarations for QRCode library are not strictly needed here as they are inside the HTML string,
 // but we'll keep the process.env access clean by letting Node.js types handle it.
 
-
 export const getDashboardHtml = () => `
 <!DOCTYPE html>
 <html lang="en">

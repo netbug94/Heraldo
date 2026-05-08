@@ -12,17 +12,16 @@ import com.google.api.services.tasks.Tasks
 import com.google.api.services.tasks.TasksScopes
 import com.google.api.services.tasks.model.Task
 import com.google.api.services.tasks.model.TaskList
+import com.netbug94.core.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import java.io.File
 
 private const val TOKENS_DIRECTORY_PATH = "tokens"
 private const val APPLICATION_NAME = "HeraldoGestor"
 
-private val logger = LoggerFactory.getLogger("com.netbug94.tasks.GoogleTasksClient")
-
 class GoogleTasksClient {
+    private val logger by logger()
 
     private val jsonFactory = GsonFactory.getDefaultInstance()
     private val httpTransport = NetHttpTransport()

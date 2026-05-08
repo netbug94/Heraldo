@@ -1,6 +1,5 @@
 package com.netbug94.tasks
 
-import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.DateTime

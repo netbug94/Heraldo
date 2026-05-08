@@ -6,7 +6,6 @@ internal object DashboardViews {
 
     fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
         val taskListHtml = tasks.joinToString("") { task ->
-            // Dark Souls thematic statuses
             val (statusClass, statusText, icon) = when {
                 task.mensajeroDone -> Triple("sent", "Fulfilled", "🔥")
                 else -> Triple("waiting", "Awaiting", "🌑")
@@ -101,7 +100,6 @@ internal object DashboardViews {
         """.trimIndent()
     }
 
-    // Cinematic "YOU DIED" / "BONFIRE LIT" style loading screens
     fun renderLoadingState(message: String): String {
         val (clearMessage, colorClass) = when(message) {
             "Summoning Decrees..." -> "SUMMONING PHANTOMS" to "#c87a2a" // Bonfire Gold

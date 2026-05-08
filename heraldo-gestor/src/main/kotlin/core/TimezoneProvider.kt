@@ -6,16 +6,14 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-private val logger = LoggerFactory.getLogger("com.netbug94.core.TimezoneProvider")
-
 class TimezoneProvider(private val client: HttpClient, private val gistUrl: String) {
+    private val logger by logger()
 
     companion object {
         const val DEFAULT_TIMEZONE = "America/Mexico_City"
@@ -25,16 +23,14 @@ class TimezoneProvider(private val client: HttpClient, private val gistUrl: Stri
     private var currentZone = ZoneId.of(DEFAULT_TIMEZONE)
     private val mutex = Mutex()
 
-    // Use Monotonic time for bulletproof duration measuring, initialized to the past so it fetches immediately
+    // Monotonic time; initialized to the past so it fetches immediately
     private var lastChecked = TimeSource.Monotonic.markNow() - CACHE_EXPIRATION
 
     suspend fun getMyLocalTime(): ZonedDateTime {
-        // Quick check (no lock) so fast-paths aren't blocked
         if (lastChecked.elapsedNow() > CACHE_EXPIRATION) {
 
-            // Lock to prevent multiple network calls at the exact same time
+            // Lock to prevent multi-network calls
             mutex.withLock {
-                // Double-check inside the lock in case another thread just updated it
                 if (lastChecked.elapsedNow() > CACHE_EXPIRATION) {
                     try {
                         val maxAttempts = 3
@@ -45,13 +41,12 @@ class TimezoneProvider(private val client: HttpClient, private val gistUrl: Stri
                                 val response = client.get(finalUrl).bodyAsText().trim()
                                 currentZone = ZoneId.of(response)
                                 logger.info("🌍 Timezone Sync: Updated to $currentZone")
-                                break // Success! Break out of the for-loop
+                                break
                             } catch (e: Exception) {
-                                if (attempt >= maxAttempts) throw e // If it's our last try, bubble the error up
+                                if (attempt >= maxAttempts) throw e
 
                                 logger.warn("🌍 Timezone Sync Attempt $attempt failed: ${e.message}. Retrying in 5s...")
 
-                                // Fix 2: Using explicit Duration instead of legacy Long
                                 delay(5.seconds)
                             }
                         }
