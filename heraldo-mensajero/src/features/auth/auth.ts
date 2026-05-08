@@ -4,7 +4,7 @@
 // Credentials are read from DASHBOARD_USER / DASHBOARD_PASSWORD env vars.
 
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // <-- CHANGED TO BCRYPTJS
 import jwt from 'jsonwebtoken';
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
@@ -25,7 +25,10 @@ const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
     const token = req.cookies?.[COOKIE_NAME];
 
-    if (!token) return res.redirect('/login');
+    if (!token) {
+        res.redirect('/login');
+        return;
+    }
 
     try {
         // If the token is valid and hasn't expired, they pass.
