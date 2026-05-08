@@ -1,14 +1,12 @@
 package com.netbug94.reminders
 
 import com.netbug94.core.TimezoneProvider
+import com.netbug94.core.logger
 import com.netbug94.mensajero.MensajeroClient
 import com.netbug94.tasks.TaskRepository
 import kotlinx.coroutines.*
-import org.slf4j.LoggerFactory
 import java.time.LocalTime
 import kotlin.time.Duration.Companion.minutes
-
-private val logger = LoggerFactory.getLogger("com.netbug94.reminders.TaskDispatcher")
 
 class TaskDispatcher(
     private val repository: TaskRepository,
@@ -18,13 +16,14 @@ class TaskDispatcher(
     private val heartbeatTime: LocalTime?,
     dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
+    private val logger by logger()
+
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
     private var lastHeartbeatDate: java.time.LocalDate? = null
 
     fun start() {
         logger.info("Dispatcher: Booting background workers...")
 
-        // Worker 1: Periodically refresh tasks from Google
         scope.launch {
             while (isActive) {
                 try {
@@ -36,7 +35,6 @@ class TaskDispatcher(
             }
         }
 
-        // Worker 2: Check every minute if it's time to trigger an alert
         scope.launch {
             while (isActive) {
                 try {
@@ -64,7 +62,6 @@ class TaskDispatcher(
         val userNow = userZDT.toLocalTime().withSecond(0).withNano(0)
         val userDate = userZDT.toLocalDate()
 
-        // 1. Check and send Heartbeat
         if (heartbeatTime != null && userNow == heartbeatTime && lastHeartbeatDate != userDate) {
             logger.info("🫀 Triggering Daily System Heartbeat")
             val success = mensajeroClient.sendMessage(
@@ -78,9 +75,7 @@ class TaskDispatcher(
             }
         }
 
-        // 2. Process tasks
         repository.getAllCachedTasks().forEach { task ->
-            // Skip tasks that are already done, or somehow don't belong to today
             if (task.mensajeroDone || (task.dueDate != null && task.dueDate != userDate)) {
                 return@forEach
             }
@@ -91,26 +86,23 @@ class TaskDispatcher(
 
             var minutesLate = nowMins - triggerMins
 
-            // Bulletproof midnight wrap-around
             if (minutesLate < -720) minutesLate += 1440
             if (minutesLate > 720) minutesLate -= 1440
 
-            // RULE 2 FIXED: If we are at or past the trigger time, fire it. No expiration window.
             val isTimeToTrigger = minutesLate >= 0
-
-            // If it's more than 2 minutes late, we consider it a recovery task and flag it as past due.
             val isSignificantlyLate = minutesLate > 2
 
             if (isTimeToTrigger) {
                 if (task.retryCount >= 5) {
                     if (task.retryCount == 5) {
                         logger.error("❌ Task '${task.title}' reached max retries (5). Giving up.")
-                        repository.incrementRetryCount(task.id) // Increment to 6 so we stop logging
+                        repository.incrementRetryCount(task.id)
                     }
                     return@forEach
                 }
 
-                val displayTitle = if (isSignificantlyLate) {
+                // Prevent the "PAST DUE" text from sticking to the Type 3 Summary task
+                val displayTitle = if (isSignificantlyLate && !task.id.startsWith("summary_")) {
                     "⚠️ PAST DUE\n⏰ Originally scheduled for: ${task.dueTime}\n\n${task.title}"
                 } else {
                     task.title

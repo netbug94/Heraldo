@@ -14,15 +14,23 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import java.time.LocalTime
 
+/**
+ * Centralized fallback values for the Heraldo system.
+ * Using an object keeps the injection logic clean and readable.
+ */
+private object Defaults {
+    val ALL_DAY_TIME: LocalTime = "07:00".parseTime()!!
+    val SUMMARY_TASK_TIME: LocalTime = "12:00".parseTime()!!
+    const val LEAD_TIME_MINUTES = 0L
+}
+
 val appModule = module {
 
     single {
         HttpClient(CIO) {
             engine {
                 requestTimeout = 15_000
-                endpoint {
-                    connectTimeout = 15_000
-                }
+                endpoint { connectTimeout = 15_000 }
             }
             install(ContentNegotiation) {
                 json(Json {
@@ -36,7 +44,6 @@ val appModule = module {
 
     single { SettingsRepository() }
 
-    // Builds the Mensajero client using ApplicationConfig
     single {
         val config = get<ApplicationConfig>()
         val settings = get<SettingsRepository>()
@@ -46,7 +53,7 @@ val appModule = module {
 
         val apiKey = config.propertyOrNull("app.mensajero.apiKey")?.getString()
         val baseUrl = config.propertyOrNull("app.mensajero.url")?.getString()?.removeSuffix("/") ?: "http://localhost:3000"
-        
+
         val defaultTemplate = config.propertyOrNull("app.mensajero.template")?.getString() ?: MensajeroClient.DEFAULT_TEMPLATE
         val template = settings.getMensajeroTemplate(defaultTemplate)
 
@@ -61,36 +68,38 @@ val appModule = module {
         TimezoneProvider(get(), gistUrl)
     }
 
-    // Build the APIs
     single { GoogleTasksClient() }
     single { GoogleCalendarClient(get()) }
 
-    // Build the Repository
+    // ── Build the Repository ──
     single {
         val config = get<ApplicationConfig>()
-        val allDayTimeStr = config.propertyOrNull("app.reminders.allDayMensajeroTime")?.getString()
-        val allDayTime = allDayTimeStr?.let {
-            runCatching { LocalTime.parse(it) }.getOrNull()
-        } ?: LocalTime.of(7, 0)
 
-        val summaryTimeStr = config.propertyOrNull("app.reminders.summaryTaskTime")?.getString()
-        val summaryTaskTime = summaryTimeStr?.let {
-            runCatching { LocalTime.parse(it) }.getOrNull()
-        } ?: LocalTime.of(9, 0)
+        val allDayTime = config.propertyOrNull("app.reminders.allDayMensajeroTime")
+            ?.getString()?.parseTime() ?: Defaults.ALL_DAY_TIME
+
+        val summaryTaskTime = config.propertyOrNull("app.reminders.summaryTaskTime")
+            ?.getString()?.parseTime() ?: Defaults.SUMMARY_TASK_TIME
 
         TaskRepository(get(), get<MensajeroClient>(), get(), get(), allDayTime, summaryTaskTime)
     }
 
+    // ── Build the Dispatcher ──
     single {
         val config = get<ApplicationConfig>()
-        val leadTimeStr = config.propertyOrNull("app.reminders.leadTimeMinutes")?.getString()
-        val leadTime = leadTimeStr?.toLongOrNull() ?: 0L
 
-        val heartbeatTimeStr = config.propertyOrNull("app.reminders.heartbeatTime")?.getString()
-        val heartbeatTime = heartbeatTimeStr?.let {
-            runCatching { LocalTime.parse(it) }.getOrNull()
-        }
+        val leadTime = config.propertyOrNull("app.reminders.leadTimeMinutes")
+            ?.getString()?.toLongOrNull() ?: Defaults.LEAD_TIME_MINUTES
+
+        val heartbeatTime = config.propertyOrNull("app.reminders.heartbeatTime")
+            ?.getString()?.parseTime()
 
         TaskDispatcher(get(), get(), get(), leadTime, heartbeatTime)
     }
 }
+
+/**
+ * Idiomatic Kotlin Extension:
+ * Safely attempts to parse any String into a LocalTime.
+ */
+private fun String.parseTime(): LocalTime? = runCatching { LocalTime.parse(this) }.getOrNull()

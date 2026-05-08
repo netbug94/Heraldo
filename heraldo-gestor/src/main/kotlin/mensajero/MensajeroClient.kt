@@ -1,15 +1,13 @@
 package com.netbug94.mensajero
 
+import com.netbug94.core.logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import org.slf4j.LoggerFactory
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
-
-private val logger = LoggerFactory.getLogger("com.netbug94.mensajero.MensajeroClient")
 
 class MensajeroClient(
     private val client: HttpClient,
@@ -18,6 +16,8 @@ class MensajeroClient(
     private val baseUrl: String,
     @Volatile private var template: String
 ) {
+    private val logger by logger()
+
     private val cleanPhone = phoneNumber.replace(Regex("[^0-9]"), "")
 
     suspend fun isHealthy(): Boolean {

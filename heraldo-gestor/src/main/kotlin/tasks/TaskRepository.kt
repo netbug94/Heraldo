@@ -1,6 +1,7 @@
 package com.netbug94.tasks
 
 import com.netbug94.core.TimezoneProvider
+import com.netbug94.core.logger
 import com.netbug94.mensajero.MensajeroClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -8,13 +9,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.concurrent.ConcurrentHashMap
-
-private val logger = LoggerFactory.getLogger("com.netbug94.tasks.TaskRepository")
 
 class TaskRepository(
     private val timezoneProvider: TimezoneProvider,
@@ -24,6 +22,7 @@ class TaskRepository(
     private val allDayMensajeroTime: LocalTime,
     private val summaryTaskTime: LocalTime
 ) {
+    private val logger by logger()
 
     private val dailyCache = ConcurrentHashMap<String, TaskData>()
     private val cacheFile = File("./config/cache.json")
@@ -70,33 +69,17 @@ class TaskRepository(
             val myRealNow = timezoneProvider.getMyLocalTime()
             val myRealToday = myRealNow.toLocalDate()
 
-            // === 0. MISSED TASKS LOGIC (The "Yesterday" Chamber) ===
+            val allMissedTitles = mutableSetOf<String>()
+
+            // === 0. CACHE MISSED TASKS (Type 3 Logic Part 1) ===
             cacheMutex.withLock {
-                val missedTasks = dailyCache.values.filter {
+                val cachedMissed = dailyCache.values.filter {
                     !it.mensajeroDone && !it.id.startsWith("summary_") && it.dueDate != null && it.dueDate < myRealToday
                 }
+                cachedMissed.forEach { allMissedTitles.add(it.title) }
 
-                if (missedTasks.isNotEmpty()) {
-                    val count = missedTasks.size
-                    val listStr = missedTasks.joinToString("\n") { "• ${it.title}" }
-                    val summaryId = "summary_$myRealToday"
-
-                    dailyCache[summaryId] = TaskData(
-                        id = summaryId,
-                        taskListId = "NONE",
-                        title = "⚠️ $count Missed Tasks from Previous Days",
-                        description = "The server has returned. These tasks were left in the fog:\n$listStr",
-                        dueTime = summaryTaskTime,
-                        mensajeroDone = false,
-                        dueDate = myRealToday
-                    )
-                }
-
-                // Clean up old items that aren't the current summary
-                val staleIds = dailyCache.values.filter {
-                    it.dueDate != null && it.dueDate < myRealToday && !it.id.startsWith("summary_")
-                }.map { it.id }
-
+                // Clean up old individual items so they don't linger
+                val staleIds = cachedMissed.map { it.id }
                 staleIds.forEach { dailyCache.remove(it) }
             }
 
@@ -107,19 +90,22 @@ class TaskRepository(
             for (taskList in taskLists) {
                 googleTasksClient.getTasks(taskList.id).forEach { task ->
                     val rawTitle = task.title ?: return@forEach
-
-                    val dueString = task.due
-                    if (dueString == null) {
-                        logger.warn("⚠️ DROPPED (No Date): Google Tasks sent '$rawTitle' without a date. You MUST assign it to 'Today' in the app.")
-                        return@forEach
-                    }
+                    val dueString = task.due ?: return@forEach
 
                     val dueDateLocal = runCatching { LocalDate.parse(dueString.take(10)) }.getOrNull()
-                    if (dueDateLocal != myRealToday) return@forEach
-
                     val (parsedTime, cleanTitle) = parseTaskTitle(rawTitle)
+
+                    // Type 3 Logic Part 2: Hunt for tasks missed while server was offline
+                    if (dueDateLocal != null && dueDateLocal < myRealToday) {
+                        if (parsedTime != null) {
+                            allMissedTitles.add(cleanTitle)
+                        }
+                        return@forEach // Ignore as a current day task
+                    }
+
+                    if (dueDateLocal != myRealToday) return@forEach
                     if (parsedTime == null) {
-                        logger.warn("⚠️ DROPPED (Regex Failed): '$rawTitle' is set for today, but the [HH:mm] tag is formatted wrong.")
+                        logger.warn("⚠️ DROPPED (Regex Failed): '$rawTitle' is set for today, but missing [HH:mm]")
                         return@forEach
                     }
 
@@ -152,11 +138,34 @@ class TaskRepository(
                 }
             } catch (e: Exception) { logger.error("🚨 Calendar Sync Error: ${e.message}") }
 
-            // === 3. CLEANUP ===
+            // === 3. BUILD TYPE 3 SUMMARY ===
+            if (allMissedTitles.isNotEmpty()) {
+                val summaryId = "summary_$myRealToday"
+                val listStr = allMissedTitles.joinToString("\n") { "• $it" }
+
+                cacheMutex.withLock {
+                    val existingSummary = dailyCache[summaryId]
+                    dailyCache[summaryId] = TaskData(
+                        id = summaryId,
+                        taskListId = "NONE", // Ensures it NEVER gets marked complete in Google
+                        title = "⚠️ ${allMissedTitles.size} Missed Tasks from Previous Days",
+                        description = "The server has returned. These tasks were left in the fog:\n$listStr",
+                        dueTime = summaryTaskTime, // Fires at the time you specify in .env
+                        mensajeroDone = existingSummary?.mensajeroDone ?: false, // Prevents spam!
+                        dueDate = myRealToday
+                    )
+                }
+            }
+
+            // === 4. CACHE CLEANUP ===
             cacheMutex.withLock {
                 val deletedIds = dailyCache.keys - validTaskIdsForToday
                 deletedIds.forEach { id ->
-                    if (id.startsWith("summary_")) return@forEach
+                    if (id == "summary_$myRealToday") return@forEach // Protect TODAY's summary
+                    if (id.startsWith("summary_")) {
+                        dailyCache.remove(id) // Purge old days' summaries
+                        return@forEach
+                    }
                     if (dailyCache[id]?.mensajeroDone != true) dailyCache.remove(id)
                 }
             }

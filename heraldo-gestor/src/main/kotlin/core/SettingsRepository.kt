@@ -2,10 +2,7 @@ package com.netbug94.core
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import java.io.File
-
-private val logger = LoggerFactory.getLogger("com.netbug94.core.SettingsRepository")
 
 @Serializable
 data class AppSettings(
@@ -15,6 +12,7 @@ data class AppSettings(
 class SettingsRepository(
     private val settingsFile: File = File("./config/settings.json")
 ) {
+    private val logger by logger()
     private var currentSettings: AppSettings = AppSettings()
 
     init {

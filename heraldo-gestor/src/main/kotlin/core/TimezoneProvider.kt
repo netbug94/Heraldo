@@ -6,16 +6,14 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-private val logger = LoggerFactory.getLogger("com.netbug94.core.TimezoneProvider")
-
 class TimezoneProvider(private val client: HttpClient, private val gistUrl: String) {
+    private val logger by logger()
 
     companion object {
         const val DEFAULT_TIMEZONE = "America/Mexico_City"
