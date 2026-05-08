@@ -107,13 +107,21 @@ class TaskRepository(
             for (taskList in taskLists) {
                 googleTasksClient.getTasks(taskList.id).forEach { task ->
                     val rawTitle = task.title ?: return@forEach
-                    val dueString = task.due ?: return@forEach
+
+                    val dueString = task.due
+                    if (dueString == null) {
+                        logger.warn("⚠️ DROPPED (No Date): Google Tasks sent '$rawTitle' without a date. You MUST assign it to 'Today' in the app.")
+                        return@forEach
+                    }
 
                     val dueDateLocal = runCatching { LocalDate.parse(dueString.take(10)) }.getOrNull()
                     if (dueDateLocal != myRealToday) return@forEach
 
                     val (parsedTime, cleanTitle) = parseTaskTitle(rawTitle)
-                    if (parsedTime == null) return@forEach
+                    if (parsedTime == null) {
+                        logger.warn("⚠️ DROPPED (Regex Failed): '$rawTitle' is set for today, but the [HH:mm] tag is formatted wrong.")
+                        return@forEach
+                    }
 
                     validTaskIdsForToday.add(task.id)
                     syncTaskToCache(task.id, taskList.id, cleanTitle, task.notes, parsedTime, myRealToday)

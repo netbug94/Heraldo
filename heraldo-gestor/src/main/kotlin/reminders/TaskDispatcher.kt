@@ -10,8 +10,6 @@ import kotlin.time.Duration.Companion.minutes
 
 private val logger = LoggerFactory.getLogger("com.netbug94.reminders.TaskDispatcher")
 
-private const val EXPIRATION_WINDOW_MINUTES = 10
-
 class TaskDispatcher(
     private val repository: TaskRepository,
     private val mensajeroClient: MensajeroClient,
@@ -62,8 +60,9 @@ class TaskDispatcher(
             return
         }
 
-        val userNow = timezoneProvider.getMyLocalTime().toLocalTime().withSecond(0).withNano(0)
-        val userDate = timezoneProvider.getMyLocalTime().toLocalDate()
+        val userZDT = timezoneProvider.getMyLocalTime()
+        val userNow = userZDT.toLocalTime().withSecond(0).withNano(0)
+        val userDate = userZDT.toLocalDate()
 
         // 1. Check and send Heartbeat
         if (heartbeatTime != null && userNow == heartbeatTime && lastHeartbeatDate != userDate) {
@@ -81,32 +80,37 @@ class TaskDispatcher(
 
         // 2. Process tasks
         repository.getAllCachedTasks().forEach { task ->
+            // Skip tasks that are already done, or somehow don't belong to today
+            if (task.mensajeroDone || (task.dueDate != null && task.dueDate != userDate)) {
+                return@forEach
+            }
+
             val nowMins = userNow.hour * 60 + userNow.minute
             val dueMins = task.dueTime.hour * 60 + task.dueTime.minute
             val triggerMins = dueMins - alertLeadTimeMinutes.toInt()
 
-            // Calculate how many minutes late the task is
             var minutesLate = nowMins - triggerMins
 
-            // BULLETPROOF MIDNIGHT WRAP-AROUND (1440 minutes in a day)
-            // If the math says we are -1430 minutes "late" (trigger was 23:55, now is 00:05), it actually means we are 10 minutes late.
+            // Bulletproof midnight wrap-around
             if (minutesLate < -720) minutesLate += 1440
             if (minutesLate > 720) minutesLate -= 1440
 
-            // Logic Gates
-            val isTimeToTrigger = minutesLate in 0..EXPIRATION_WINDOW_MINUTES
-            val isLate = minutesLate > 0
+            // RULE 2 FIXED: If we are at or past the trigger time, fire it. No expiration window.
+            val isTimeToTrigger = minutesLate >= 0
 
-            if (isTimeToTrigger && !task.mensajeroDone) {
+            // If it's more than 2 minutes late, we consider it a recovery task and flag it as past due.
+            val isSignificantlyLate = minutesLate > 2
+
+            if (isTimeToTrigger) {
                 if (task.retryCount >= 5) {
                     if (task.retryCount == 5) {
                         logger.error("❌ Task '${task.title}' reached max retries (5). Giving up.")
-                        repository.incrementRetryCount(task.id)
+                        repository.incrementRetryCount(task.id) // Increment to 6 so we stop logging
                     }
                     return@forEach
                 }
 
-                val displayTitle = if (isLate) {
+                val displayTitle = if (isSignificantlyLate) {
                     "⚠️ PAST DUE\n⏰ Originally scheduled for: ${task.dueTime}\n\n${task.title}"
                 } else {
                     task.title
