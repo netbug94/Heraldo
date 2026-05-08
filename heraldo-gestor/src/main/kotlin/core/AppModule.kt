@@ -14,14 +14,11 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import java.time.LocalTime
 
-/**
- * Centralized fallback values for the Heraldo system.
- * Using an object keeps the injection logic clean and readable.
- */
 private object Defaults {
-    val ALL_DAY_TIME: LocalTime = "07:00".parseTime()!!
+    val ALL_DAY_TIME: LocalTime = "12:00".parseTime()!!
     val SUMMARY_TASK_TIME: LocalTime = "12:00".parseTime()!!
     const val LEAD_TIME_MINUTES = 0L
+    val HEARTBEAT_TIME: LocalTime = "12:00".parseTime()!!
 }
 
 val appModule = module {
@@ -92,14 +89,11 @@ val appModule = module {
             ?.getString()?.toLongOrNull() ?: Defaults.LEAD_TIME_MINUTES
 
         val heartbeatTime = config.propertyOrNull("app.reminders.heartbeatTime")
-            ?.getString()?.parseTime()
+            ?.getString()?.parseTime() ?: Defaults.HEARTBEAT_TIME
 
         TaskDispatcher(get(), get(), get(), leadTime, heartbeatTime)
     }
 }
 
-/**
- * Idiomatic Kotlin Extension:
- * Safely attempts to parse any String into a LocalTime.
- */
+// Safely attempts to parse any String into a LocalTime.
 private fun String.parseTime(): LocalTime? = runCatching { LocalTime.parse(this) }.getOrNull()

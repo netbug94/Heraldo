@@ -31,16 +31,15 @@ class MensajeroClient(
                 return false
             }
 
-            // 1. Safe Serialization: Absorb any data type (string, int, bool)
+            // Safe Serialization
             val statusMap = response.body<Map<String, JsonElement>>()
 
-            // 2. Safe Extraction: Get the content of "status" without crashing
+            // Safe Extraction
             val status = statusMap["status"]?.jsonPrimitive?.content
 
             status == "CONNECTED"
 
         } catch (e: Exception) {
-            // 3. Informative Errors: Keep these! They are vital for debugging
             logger.error("🛑 Mensajero Healthcheck failed at: $baseUrl/health")
             logger.error("🛑 Error: ${e.message}")
             false

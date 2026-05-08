@@ -88,7 +88,6 @@ fun Application.dashboardRoutes() {
                 try {
                     incoming.consumeEach { _ -> /* keep-alive */ }
                 } catch (_: ClosedReceiveChannelException) {
-                    // Ignore disconnect
                 } finally {
                     connections -= this
                 }
@@ -96,21 +95,16 @@ fun Application.dashboardRoutes() {
         }
 
         post("/webhook/mensajero") {
-            // 1. Access the structured config from application.conf
             val config = call.application.environment.config
             val expectedKey = config.propertyOrNull("app.mensajero.apiKey")?.getString()
 
-            // 2. Get the key provided by the Hand
             val clientKey = call.request.header("x-api-key")
 
-            // 3. Security Check: Compare the seals
             if (expectedKey != null && clientKey != expectedKey) {
-                // Use the flavor text you like with the official status code
                 call.respond(HttpStatusCode.Unauthorized, "The seal was rejected.")
                 return@post
             }
 
-            // 4. Execution: Signal all connected dashboards to refresh
             connections.forEach { session ->
                 try {
                     session.send(Frame.Text("RELOAD"))

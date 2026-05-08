@@ -6,14 +6,14 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 /**
- * A modern Kotlin delegate for SLF4J.
+ * Modern Kotlin delegate for SLF4J.
  * Usage: private val logger by logger()
  */
 fun <T : Any> T.logger(): ReadOnlyProperty<T, Logger> = object : ReadOnlyProperty<T, Logger> {
     private var logger: Logger? = null
     override fun getValue(thisRef: T, property: KProperty<*>): Logger {
         if (logger == null) {
-            // Automatically detects the class name (e.g., TaskRepository)
+            // Automatically detects the class name
             logger = LoggerFactory.getLogger(thisRef::class.java)
         }
         return logger!!

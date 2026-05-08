@@ -1,7 +1,7 @@
 package com.netbug94.auth
 
 /**
- * Renders the login page HTML in the existing medieval dark-theme aesthetic.
+ * Renders the login page.
  */
 internal object LoginView {
 
