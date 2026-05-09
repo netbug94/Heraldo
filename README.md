@@ -33,14 +33,17 @@ Open `.env` and fill in your details:
 ```bash
 nano .env
 ```
-- **HERALDO_INTERNAL_TOKEN**: Generate a random secure string. Both services use this for internal auth.
-```bash
-openssl rand -hex 32
-```
-- **MENSAJERO_PHONE**: Your target WhatsApp number (include country code, e.g., `+521...`).
+
+- **HERALDO_INTERNAL_TOKEN**: A secure password used for communication between the two services.
+  - **Action**: Run `openssl rand -hex 32` in your terminal and paste the result as the value.
+- **MENSAJERO_PHONE**: The WhatsApp number that will receive the alerts.
+  - **Format**: Include country code without `+` or spaces (e.g., `5211234567890`).
 - **GIST_TIMEZONE_URL**: The **Raw** URL to your timezone GitHub Gist.
-- **GOOGLE_CREDENTIALS_JSON**: Paste your entire `credentials.json` content here inside single quotes: `'{"installed":...}'`.
-- **DASHBOARD_USER/PASSWORD**: Set your credentials for the web interface.
+  - **Action**: Create a [New Gist](https://gist.github.com/) containing only your timezone string (e.g., `America/Mexico_City`). Click **"Raw"** and copy that URL.
+- **GOOGLE_CREDENTIALS_JSON**: Your Google Cloud OAuth client secret.
+  - **Action**: Download your `credentials.json` from the Google Cloud Console (APIs & Services > Credentials). Paste the entire JSON content here **inside single quotes**: `'{"installed":...}'`.
+  - **Note**: Ensure your Google project is set to "Production" in the OAuth Consent Screen (no verification or payment required) to avoid token expiration.
+- **DASHBOARD_USER/PASSWORD**: Set a username and password to protect your web dashboards.
 
 ### 3. Start the Engine
 Navigate to the `scripts/` folder and run the bootstrapper using `bash`:
@@ -62,7 +65,7 @@ bash RISE.sh
 3. **Authorize**: Copy the generated URL into your browser and authorize your account.
 4. **Redirect**: The browser will redirect to a "Site cannot be reached" page (usually `http://localhost:8080/Callback?code=...`).
 5. **Finalize**: 
-   - **Option 1 (Easiest)**: Use SSH Tunneling (`ssh -L 8080:localhost:8080 user@server-ip`) before clicking the link so the redirect works automatically.
+   - **Option 1 (Recommended)**: Use SSH Tunneling (`ssh -L 8080:localhost:8080 user@server-ip`) before clicking the link so the redirect works automatically.
    - **Option 2 (Manual)**: Change `localhost` to `your-server-ip` in the address bar of the "Site cannot be reached" page and hit Enter.
 
 ---
