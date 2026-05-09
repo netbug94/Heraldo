@@ -7,10 +7,12 @@ Composed of a Kotlin backend (`heraldo-gestor`) that monitors Google APIs, and a
 
 ## 📋 Prerequisites
 - **Docker** and **Docker Compose** installed on your server.
-- A **Google Cloud Console** project with the Google Tasks and Calendar APIs enabled.
-- A **GitHub Gist** containing your timezone string (e.g., `America/Hermosillo`).
+- A **Google Cloud Console** project with the Google Tasks and Calendar APIs
+  - Read and Write permission for  Tasks
+  - Only Read permission for Calendar
+- A **GitHub Gist** containing your timezone string (e.g., `America/Mexico_City`).
 
----
+--
 
 ## 🚀 Plug-and-Play Deployment Guide
 
