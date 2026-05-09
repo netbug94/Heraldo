@@ -37,7 +37,7 @@ nano .env
 - **HERALDO_INTERNAL_TOKEN**: A secure password used for communication between the two services.
   - **Action**: Run `openssl rand -hex 32` in your terminal and paste the result as the value.
 - **MENSAJERO_PHONE**: The WhatsApp number that will receive the alerts.
-  - **Format**: Include country code without `+` or spaces (e.g., `5211234567890`).
+  - **Format**: Include country code with or without `+` and no spaces (e.g., `5211234567890` or `+5211234567890`).
 - **GIST_TIMEZONE_URL**: The **Raw** URL to your timezone GitHub Gist.
   - **Action**: Create a [New Gist](https://gist.github.com/) containing only your timezone string (e.g., `America/Mexico_City`). Click **"Raw"** and copy that URL.
 - **GOOGLE_CREDENTIALS_JSON**: Your Google Cloud OAuth client secret.
