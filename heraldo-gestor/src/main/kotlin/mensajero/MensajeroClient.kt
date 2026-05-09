@@ -53,8 +53,8 @@ class MensajeroClient(
         val currentTemplate = settings.getMensajeroTemplate(defaultTemplate)
 
         val header = currentTemplate
-            .replace("{title}", title.trim())
-            .replace("%s", title.trim())
+            .replace("{title}", "*${title.trim()}*")
+            .replace("%s", "*${title.trim()}*")
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
         val fullMessage = "$header$body"
 
