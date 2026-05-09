@@ -53,10 +53,12 @@ class MensajeroClient(
         val currentTemplate = settings.getMensajeroTemplate(defaultTemplate)
 
         val header = currentTemplate
-            .replace("{title}", "*${title.trim()}*")
-            .replace("%s", "*${title.trim()}*")
+            .replace("{title}", title.trim())
+            .replace("%s", title.trim())
+        val boldHeader = "*$header*"
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
-        val fullMessage = "$header$body"
+
+        val fullMessage = "$boldHeader$body"
 
         return try {
             val response: HttpResponse = client.post("$baseUrl/send") {
