@@ -1,4 +1,4 @@
-// logger.ts
+// src/core/logger.ts
 import winston from 'winston';
 
 export const logger = winston.createLogger({
@@ -8,11 +8,9 @@ export const logger = winston.createLogger({
         winston.format.printf(({timestamp, level, message}) => `[${timestamp}] ${level.toUpperCase()}: ${message}`)
     ),
     transports: [
-        // Standard Output (captured by Docker logs)
         new winston.transports.Console({
             format: winston.format.colorize({all: true})
         }),
-        // Persistent log file
         new winston.transports.File({
             filename: 'heraldo-mensajero.log'
         })

@@ -1,3 +1,4 @@
+// src/features/messaging/routes.ts
 import { Router } from 'express';
 import { wa } from '../../core/whatsapp.js';
 import { logger } from '../../core/logger.js';
@@ -5,9 +6,8 @@ import { logger } from '../../core/logger.js';
 export const messagingRouter = Router();
 const API_KEY = process.env.HERALDO_INTERNAL_TOKEN;
 
-// ==========================================
+
 // SECURITY MIDDLEWARE
-// ==========================================
 messagingRouter.use((req, res, next) => {
     // Protect POST and DELETE requests
     if (req.method === 'POST' || req.method === 'DELETE') {
@@ -20,9 +20,7 @@ messagingRouter.use((req, res, next) => {
     next();
 });
 
-// ==========================================
 // GESTOR ROUTES (Mounted at root in index.ts)
-// ==========================================
 messagingRouter.get('/health', (_req, res) => {
     res.json({ ...wa.sessionState, service: 'UP' });
 });
@@ -33,9 +31,7 @@ messagingRouter.post('/send', async (req, res) => {
     res.status(success ? 200 : 500).json({ success });
 });
 
-// ==========================================
 // DASHBOARD API ROUTES (Mounted at /api in index.ts)
-// ==========================================
 messagingRouter.get('/status', (_req, res) => {
     res.json({ session: wa.sessionState });
 });

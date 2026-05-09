@@ -1,13 +1,13 @@
-// auth.ts
+// src/features/auth/auth.ts
 // Cookie-based session authentication for the Heraldo Mensajero dashboard.
 // Sessions are stored in-memory — tokens are invalidated on container restart.
 // Credentials are read from DASHBOARD_USER / DASHBOARD_PASSWORD env vars.
 
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcryptjs'; // <-- CHANGED TO BCRYPTJS
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// ── Bootstrap ────────────────────────────────────────────────────────────────
+// Bootstrap
 const DASHBOARD_USER = process.env.DASHBOARD_USER;
 const DASHBOARD_PASSWORD_RAW = process.env.DASHBOARD_PASSWORD;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_change_me_in_prod';
@@ -21,7 +21,7 @@ const PASSWORD_HASH = bcrypt.hashSync(DASHBOARD_PASSWORD_RAW, 10);
 const COOKIE_NAME = 'heraldo_mensajero_session';
 const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// ── Middleware ────────────────────────────────────────────────────────────────
+// Middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
     const token = req.cookies?.[COOKIE_NAME];
 
@@ -42,7 +42,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     }
 }
 
-// ── Route handlers ────────────────────────────────────────────────────────────
+// Route handlers
 export async function handleLoginPost(req: Request, res: Response): Promise<void> {
     const { username, password } = req.body as { username?: string; password?: string };
 
@@ -87,7 +87,7 @@ export function handleLogout(_req: Request, res: Response): void {
     res.redirect('/login');
 }
 
-// ── Login page HTML ───────────────────────────────────────────────────────────
+// Login page HTML
 
 function getLoginHtml(error?: string): string {
     const errorBanner = error

@@ -1,6 +1,6 @@
+// src/features/auth/routes.ts
 import { Router } from 'express';
 import { handleLoginGet, handleLoginPost, handleLogout } from './auth.js';
-
 export const authRouter = Router();
 
 authRouter.get('/login', handleLoginGet);

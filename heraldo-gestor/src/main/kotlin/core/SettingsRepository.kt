@@ -6,13 +6,20 @@ import java.io.File
 
 @Serializable
 data class AppSettings(
-    val lastSync: String? = null
+    val lastSync: String? = null,
+    val mensajeroTemplate: String? = null
 )
 
 class SettingsRepository(
     private val settingsFile: File = File("./config/settings.json")
 ) {
     private val logger by logger()
+
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
+
     private var currentSettings: AppSettings = AppSettings()
 
     init {
@@ -35,12 +42,23 @@ class SettingsRepository(
         }
     }
 
-    private val json = Json { 
-        prettyPrint = true 
-        ignoreUnknownKeys = true
+    private fun saveSettings() {
+        try {
+            settingsFile.parentFile?.mkdirs()
+            val jsonStr = json.encodeToString(currentSettings)
+            settingsFile.writeText(jsonStr)
+        } catch (e: Exception) {
+            logger.error("🚨 Failed to save settings: ${e.message}")
+        }
     }
 
     fun getMensajeroTemplate(fallback: String): String {
-        return fallback
+        return currentSettings.mensajeroTemplate ?: fallback
+    }
+
+    fun saveMensajeroTemplate(newTemplate: String) {
+        currentSettings = currentSettings.copy(mensajeroTemplate = newTemplate)
+        saveSettings()
+        logger.info("⚙️ Mensajero template sealed and saved to disk.")
     }
 }

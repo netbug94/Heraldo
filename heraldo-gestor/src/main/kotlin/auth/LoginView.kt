@@ -1,8 +1,5 @@
 package com.netbug94.auth
 
-/**
- * Renders the login page.
- */
 internal object LoginView {
 
     fun renderLogin(error: String? = null): String {

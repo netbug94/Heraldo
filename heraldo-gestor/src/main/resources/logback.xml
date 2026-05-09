@@ -1,7 +1,6 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!-- Ignore warning -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
@@ -10,6 +9,6 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <!-- We are on CIO now. Jetty and Netty are no longer running the server. -->
+    <!-- Using CIO -->
     <logger name="io.ktor.server.cio" level="INFO"/>
 </configuration>

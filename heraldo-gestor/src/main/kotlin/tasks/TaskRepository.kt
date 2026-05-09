@@ -31,6 +31,10 @@ class TaskRepository(
     private var isTokenRevoked = false
     private val cacheMutex = Mutex()
 
+    @Volatile
+    var lastSyncTime: String = "Never"
+        private set
+
     init {
         loadState()
     }
@@ -71,7 +75,7 @@ class TaskRepository(
 
             val allMissedTitles = mutableSetOf<String>()
 
-            // === 0. CACHE MISSED TASKS (Type 3 Logic Part 1) ===
+            // Cache missed tasks (Type 3 Logic Part 1)
             cacheMutex.withLock {
                 val cachedMissed = dailyCache.values.filter {
                     !it.mensajeroDone && !it.id.startsWith("summary_") && it.dueDate != null && it.dueDate < myRealToday
@@ -86,7 +90,7 @@ class TaskRepository(
             val taskLists = googleTasksClient.getTaskLists()
             val validTaskIdsForToday = mutableSetOf<String>()
 
-            // === 1. GOOGLE TASKS ===
+            // Google tasks
             for (taskList in taskLists) {
                 googleTasksClient.getTasks(taskList.id).forEach { task ->
                     val rawTitle = task.title ?: return@forEach
@@ -95,12 +99,11 @@ class TaskRepository(
                     val dueDateLocal = runCatching { LocalDate.parse(dueString.take(10)) }.getOrNull()
                     val (parsedTime, cleanTitle) = parseTaskTitle(rawTitle)
 
-                    // Type 3 Logic Part 2: Hunt for tasks missed while server was offline
                     if (dueDateLocal != null && dueDateLocal < myRealToday) {
                         if (parsedTime != null) {
                             allMissedTitles.add(cleanTitle)
                         }
-                        return@forEach // Ignore as a current day task
+                        return@forEach
                     }
 
                     if (dueDateLocal != myRealToday) return@forEach
@@ -114,7 +117,7 @@ class TaskRepository(
                 }
             }
 
-            // === 2. GOOGLE CALENDAR ===
+            // Google calendar
             try {
                 val startOfDay = myRealToday.atStartOfDay(myRealNow.zone)
                 val calendarEvents = googleCalendarClient.getTodayEvents(startOfDay, startOfDay.plusDays(1).minusNanos(1))
@@ -138,7 +141,7 @@ class TaskRepository(
                 }
             } catch (e: Exception) { logger.error("🚨 Calendar Sync Error: ${e.message}") }
 
-            // === 3. BUILD TYPE 3 SUMMARY ===
+            // Build type 3 summary
             if (allMissedTitles.isNotEmpty()) {
                 val summaryId = "summary_$myRealToday"
                 val listStr = allMissedTitles.joinToString("\n") { "• $it" }
@@ -147,23 +150,23 @@ class TaskRepository(
                     val existingSummary = dailyCache[summaryId]
                     dailyCache[summaryId] = TaskData(
                         id = summaryId,
-                        taskListId = "NONE", // Ensures it NEVER gets marked complete in Google
+                        taskListId = "NONE",
                         title = "⚠️ ${allMissedTitles.size} Missed Tasks from Previous Days",
                         description = "The server has returned. These tasks were left in the fog:\n$listStr",
-                        dueTime = summaryTaskTime, // Fires at the time you specify in .env
-                        mensajeroDone = existingSummary?.mensajeroDone ?: false, // Prevents spam!
+                        dueTime = summaryTaskTime,
+                        mensajeroDone = existingSummary?.mensajeroDone ?: false,
                         dueDate = myRealToday
                     )
                 }
             }
 
-            // === 4. CACHE CLEANUP ===
+            // Cache cleanup
             cacheMutex.withLock {
                 val deletedIds = dailyCache.keys - validTaskIdsForToday
                 deletedIds.forEach { id ->
-                    if (id == "summary_$myRealToday") return@forEach // Protect TODAY's summary
+                    if (id == "summary_$myRealToday") return@forEach
                     if (id.startsWith("summary_")) {
-                        dailyCache.remove(id) // Purge old days' summaries
+                        dailyCache.remove(id)
                         return@forEach
                     }
                     if (dailyCache[id]?.mensajeroDone != true) dailyCache.remove(id)
@@ -172,6 +175,9 @@ class TaskRepository(
 
             persistState()
             isTokenRevoked = false
+
+            // Record the exact time it finished
+            lastSyncTime = myRealNow.format(java.time.format.DateTimeFormatter.ofPattern("hh:mm:ss a"))
 
         } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
             if (e.statusCode == 401 && !isTokenRevoked) {

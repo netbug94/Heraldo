@@ -52,9 +52,8 @@ val appModule = module {
         val baseUrl = config.propertyOrNull("app.mensajero.url")?.getString()?.removeSuffix("/") ?: "http://localhost:3000"
 
         val defaultTemplate = config.propertyOrNull("app.mensajero.template")?.getString() ?: MensajeroClient.DEFAULT_TEMPLATE
-        val template = settings.getMensajeroTemplate(defaultTemplate)
 
-        MensajeroClient(get(), phone, apiKey, baseUrl, template)
+        MensajeroClient(get(), phone, apiKey, baseUrl, settings, defaultTemplate)
     }
 
     single {
@@ -68,7 +67,7 @@ val appModule = module {
     single { GoogleTasksClient() }
     single { GoogleCalendarClient(get()) }
 
-    // ── Build the Repository ──
+    // Build the Repository
     single {
         val config = get<ApplicationConfig>()
 
@@ -81,7 +80,7 @@ val appModule = module {
         TaskRepository(get(), get<MensajeroClient>(), get(), get(), allDayTime, summaryTaskTime)
     }
 
-    // ── Build the Dispatcher ──
+    // Build the Dispatcher
     single {
         val config = get<ApplicationConfig>()
 
@@ -95,5 +94,4 @@ val appModule = module {
     }
 }
 
-// Safely attempts to parse any String into a LocalTime.
 private fun String.parseTime(): LocalTime? = runCatching { LocalTime.parse(this) }.getOrNull()
