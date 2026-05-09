@@ -15,9 +15,9 @@ application {
     // IPv4 preference often needed for local networking/Docker
     applicationDefaultJvmArgs = listOf(
         "-Djava.net.preferIPv4Stack=true",
-        "-Xmx256m",       // Ceiling
-        "-Xms128m",       // Floor
-        "-XX:+UseSerialGC" // Lean and efficient
+        "-Xmx256m",         // Ceiling
+        "-Xms128m",         // Floor
+        "-XX:+UseSerialGC"  // Lean and efficient
     )
 }
 

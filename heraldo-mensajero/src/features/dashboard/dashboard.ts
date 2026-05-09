@@ -1,4 +1,4 @@
-//dashboard.ts
+// src/features/dashboard/dashboard.ts
 // Type declarations for QRCode library are not strictly needed here as they are inside the HTML string,
 // but we'll keep the process.env access clean by letting Node.js types handle it.
 
@@ -19,17 +19,17 @@ export const getDashboardHtml = () => `
 
         :root {
             /* The Abyss Theme */
-            --bg:       #050505; /* The Abyss */
-            --surface:  #0a0a0a; /* Cold dark stone */
-            --primary:  #a83a22; /* Dying Ember */
-            --primary-hover: #c8492c; /* Stoked Ember */
-            --text:     #a39f98; /* Ash */
-            --muted:    #54514d; /* Dark Ash */
-            --success:  #c87a2a; /* Bonfire Lit */
-            --warning:  #635c55; /* Cold Iron */
-            --danger:   #7a1a1a; /* Blood */
-            --border:   #242220; /* Tarnished Metal */
-            --glow:     rgba(200, 122, 42, 0.15); /* Faint fire glow */
+            --bg:       #050505;
+            --surface:  #0a0a0a;
+            --primary:  #a83a22;
+            --primary-hover: #c8492c;
+            --text:     #a39f98;
+            --muted:    #54514d;
+            --success:  #c87a2a;
+            --warning:  #635c55;
+            --danger:   #7a1a1a;
+            --border:   #242220;
+            --glow:     rgba(200, 122, 42, 0.15);
         }
 
         body {
@@ -44,7 +44,7 @@ export const getDashboardHtml = () => `
             background-image: radial-gradient(circle at center, #11100f 0%, #030303 100%);
         }
 
-        /* ── Header ── */
+        /* Header */
         .page-header {
             width: 100%;
             max-width: 480px;
@@ -70,7 +70,7 @@ export const getDashboardHtml = () => `
             letter-spacing: 1px;
         }
 
-        /* ── Engine status pill ── */
+        /* Engine status pill */
         .engine-status {
             display: inline-flex;
             align-items: center;
@@ -91,8 +91,8 @@ export const getDashboardHtml = () => `
             width: 8px; height: 8px;
             background: var(--muted);
             flex-shrink: 0;
-            border-radius: 0; /* Square for rougher medieval feel */
-            transform: rotate(45deg); /* Diamond shape */
+            border-radius: 0;
+            transform: rotate(45deg);
             transition: all 0.5s ease;
         }
         .dot-online   { background: var(--success); box-shadow: 0 0 10px var(--success); }
@@ -100,7 +100,7 @@ export const getDashboardHtml = () => `
         .dot-starting { background: var(--text); animation: ember-pulse 1.5s infinite; }
         .dot-qr       { background: var(--primary); animation: ember-pulse 1.5s infinite; }
 
-        /* ── Main card ── */
+        /* Main card */
         .card {
             width: 100%;
             max-width: 480px;
@@ -122,7 +122,7 @@ export const getDashboardHtml = () => `
         .card::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
         .card::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
 
-        /* ── State views ── */
+        /* State views */
         .state-view {
             display: flex;
             flex-direction: column;
@@ -133,7 +133,7 @@ export const getDashboardHtml = () => `
         .state-title  { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5rem; color: var(--text); text-transform: uppercase; }
         .state-sub    { color: var(--muted); font-size: 1.15rem; font-style: italic; line-height: 1.6; max-width: 300px; margin-bottom: 2rem; }
 
-        /* ── Status badge ── */
+        /* Status badge */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -152,7 +152,7 @@ export const getDashboardHtml = () => `
         .badge-starting { color: var(--text); animation: ember-pulse 2s infinite; }
         .badge-qr       { color: var(--primary); animation: ember-pulse 2s infinite; }
 
-        /* ── Connected box ── */
+        /* Connected box */
         .connected-box {
             width: 100%;
             background: rgba(0,0,0,0.4);
@@ -166,9 +166,9 @@ export const getDashboardHtml = () => `
         .connected-box h3 { font-family: 'Cinzel', serif; color: var(--success); font-size: 1.1rem; margin-bottom: 0.3rem; letter-spacing: 1px; font-weight: 400; text-transform: uppercase; }
         .connected-box p  { color: var(--text); font-size: 1.05rem; font-style: italic; }
 
-        /* ── QR wrapper (Summoning Sign) ── */
+        /* QR wrapper (Summoning Sign) */
         .qr-wrapper {
-            background: #d3ccc0; /* Old bone / ash color to make QR scannable */
+            background: #d3ccc0;
             border: 3px solid var(--border);
             padding: 14px;
             margin-bottom: 1rem;
@@ -188,7 +188,7 @@ export const getDashboardHtml = () => `
             margin-bottom: 2rem;
         }
 
-        /* ── Spinner (The Dark Sign) ── */
+        /* Spinner (The Dark Sign) */
         .spinner {
             width: 50px; height: 50px;
             border: 2px solid rgba(200, 122, 42, 0.1);
@@ -199,7 +199,7 @@ export const getDashboardHtml = () => `
             box-shadow: 0 0 15px var(--glow);
         }
 
-        /* ── Buttons ── */
+        /* Buttons */
         .btn {
             width: 100%;
             padding: 1rem 1.25rem;
@@ -235,7 +235,7 @@ export const getDashboardHtml = () => `
             text-shadow: 0 0 8px var(--danger);
         }
 
-        /* ── Test message row ── */
+        /* Test message row */
         .send-row {
             display: flex;
             gap: 0.5rem;
@@ -280,7 +280,7 @@ export const getDashboardHtml = () => `
         }
         .send-row button:disabled { opacity: 0.3; cursor: default; }
 
-        /* ── Footer ── */
+        /* Footer */
         .page-footer {
             margin-top: 3rem;
             color: var(--muted);
@@ -324,7 +324,7 @@ export const getDashboardHtml = () => `
         };
         const TEST_PHONE = '${process.env.MENSAJERO_PHONE || ''}';
 
-        // ── Engine status bar ──────────────────────────────────────
+        // Engine status bar
         function setEngineBar(status) {
             const dot = document.getElementById('engine-dot');
             const label = document.getElementById('engine-label');
@@ -341,7 +341,7 @@ export const getDashboardHtml = () => `
             label.textContent = text;
         }
 
-        // ── Renderers ──────────────────────────────────────────────
+        // Renderers
         function renderOffline(reason) {
             setEngineBar('OFFLINE');
             const card = document.getElementById('main-card');
@@ -383,8 +383,8 @@ export const getDashboardHtml = () => `
                 if (el && qrCode) {
                     new QRCode(el, {
                         text: qrCode, width: 220, height: 220,
-                        colorDark: '#050505', /* Pitch black for camera scanning */
-                        colorLight: '#d3ccc0', /* Bone/Ash background */
+                        colorDark: '#050505',
+                        colorLight: '#d3ccc0',
                         correctLevel: QRCode.CorrectLevel.L
                     });
                 }
@@ -426,7 +426,7 @@ export const getDashboardHtml = () => `
             \`;
         }
 
-        // ── Actions ────────────────────────────────────────────────
+        // Actions
         async function startEngine() {
             renderStarting();
             await fetch('/api/session/start', { method: 'POST', headers: API_HEADERS });
@@ -461,7 +461,7 @@ export const getDashboardHtml = () => `
             }
         }
 
-        // ── Polling loop ───────────────────────────────────────────
+        // Polling loop
         let lastStatus = null;
         let lastQr = null;
 

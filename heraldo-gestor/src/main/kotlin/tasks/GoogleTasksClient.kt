@@ -26,7 +26,7 @@ class GoogleTasksClient {
     private val jsonFactory = GsonFactory.getDefaultInstance()
     private val httpTransport = NetHttpTransport()
 
-    // --- NEW: Expose the auth URL to the dashboard ---
+    //Expose the auth URL to the dashboard
     @Volatile var pendingAuthUrl: String? = null
         private set
 
@@ -65,7 +65,7 @@ class GoogleTasksClient {
             return cred
         }
 
-        // We need auth! Generate CSRF state and Auth URL.
+        // Generate CSRF state and Auth URL.
         val state = java.util.UUID.randomUUID().toString()
         expectedState = state
 
@@ -121,7 +121,7 @@ class GoogleTasksClient {
 
     suspend fun triggerReauth() = withContext(Dispatchers.IO) {
         try {
-            credential // This getter blocks and starts the LocalServerReceiver
+            credential // This blocks and starts the LocalServerReceiver
         } catch (e: Exception) {
             logger.error("Auth flow interrupted: ${e.message}")
         }

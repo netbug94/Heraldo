@@ -22,7 +22,6 @@ fun Application.authRoutes() {
 
     routing {
 
-        // ── GET /login ─────────────────────────────────────────────────────
         get("/login") {
             val session = call.sessions.get<HeraldoSession>()
             val now = System.currentTimeMillis()
@@ -34,7 +33,6 @@ fun Application.authRoutes() {
             call.respondText(LoginView.renderLogin(), ContentType.Text.Html)
         }
 
-        // ── POST /login ────────────────────────────────────────────────────
         post("/login") {
             val params = call.receiveParameters()
             val username = params["username"]?.trim() ?: ""
@@ -52,14 +50,12 @@ fun Application.authRoutes() {
                 return@post
             }
 
-            // Issue a stateless session valid for 30 days
             val expirationTime = System.currentTimeMillis() + 30.days.inWholeMilliseconds
             call.sessions.set(HeraldoSession(username, expirationTime))
 
             call.respondRedirect("/")
         }
 
-        // ── GET /logout ────────────────────────────────────────────────────
         get("/logout") {
             call.sessions.clear<HeraldoSession>()
             call.respondRedirect("/login")
