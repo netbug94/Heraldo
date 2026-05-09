@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 import { logger } from './core/logger.js';
-import { wa } from './core/whatsapp.js'; // Imports the initialized instance
+import { wa } from './core/whatsapp.js';
 
 // Feature Routes
 import { authRouter } from './features/auth/routes.js';

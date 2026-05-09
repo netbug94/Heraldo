@@ -4,11 +4,11 @@ import com.netbug94.tasks.TaskData
 
 internal object DashboardViews {
 
-    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?): String {
+    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?, currentTemplate: String): String {
         val taskListHtml = tasks.joinToString("") { task ->
             val (statusClass, statusText, icon) = when {
-                task.mensajeroDone -> Triple("sent", "Fulfilled", "🔥")
-                else -> Triple("waiting", "Awaiting", "🌑")
+                task.mensajeroDone -> Triple("sent", "Fulfilled", "🪶")
+                else -> Triple("waiting", "Awaiting", "⏳")
             }
             """
             <li class="task-item">
@@ -39,6 +39,17 @@ internal object DashboardViews {
             """
         } else ""
 
+        // Block for the template editor
+        val templateFormHtml = """
+            <div class="template-box" style="margin-top: 2rem; margin-bottom: 2rem; background: rgba(10, 10, 10, 0.6); padding: 1.5rem; border: 1px solid #242220; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+                <h3 style="margin-top: 0; margin-bottom: 1rem; color: #a39f98; font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; font-weight: normal;">📜 Inscribe Decree Template</h3>
+                <form action="/template" method="POST">
+                    <textarea name="template" rows="3" style="width: 100%; box-sizing: border-box; background: #050505; color: #c87a2a; border: 1px solid #54514d; padding: 12px; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; resize: vertical; outline: none;">$currentTemplate</textarea>
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">Seal Template</button>
+                </form>
+            </div>
+        """.trimIndent()
+
         return """
             <!DOCTYPE html>
             <html lang="en">
@@ -50,7 +61,7 @@ internal object DashboardViews {
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-                <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+                <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪶</text></svg>">
                 <!-- External Stylesheet -->
                 <link rel="stylesheet" href="/static/styles.css">
             </head>
@@ -72,12 +83,15 @@ internal object DashboardViews {
                     
                     $authBannerHtml
                     
+                    <!-- 3. Injecting the form into the layout -->
+                    $templateFormHtml
+                    
                     <ul>
                         $finalList
                     </ul>
                 </div>
                 
-                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend">▲</button>
+                <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend">⏶</button>
                 
                 <script>
                     // WebSocket Logic

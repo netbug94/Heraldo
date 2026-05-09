@@ -7,9 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from './logger.js';
 
-// ── Configuration ─────────────────────────────────────────────────────────────
-// In Docker, point this to '/sessions' via environment variables.
-// Fallback to a 'sessions' folder in the current working directory for local dev.
+// Configuration
 const SESSIONS_DIR = process.env.SESSIONS_DIR || path.join(process.cwd(), 'sessions');
 const GESTOR_WEBHOOK_URL = process.env.GESTOR_WEBHOOK_URL || 'http://gestor:8080/webhook/mensajero';
 
@@ -26,7 +24,7 @@ export class WhatsAppManager {
 
         fetch(GESTOR_WEBHOOK_URL, {
             method: 'POST',
-            headers: { 'x-api-key': API_KEY } // Present the credential
+            headers: { 'x-api-key': API_KEY }
         }).catch((err) => logger.warn(`📡 Failed to ping Gestor: ${err.message}`));
     }
     async initAccount() {
@@ -94,7 +92,7 @@ export class WhatsAppManager {
             logger.error(`⚠️ Auth Failure: ${msg}. The sigil was rejected.`);
             this.sessionState = { status: 'AUTH_FAILED' };
 
-            // CRITICAL FIX: Delete corrupted session data so it doesn't get stuck in a boot loop
+            // Delete corrupted session data so it doesn't get stuck in a boot loop
             await this.deleteAccount();
             this.pingGestor();
         });

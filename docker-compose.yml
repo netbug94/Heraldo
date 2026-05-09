@@ -46,7 +46,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M    # Balanced for your -Xmx256m JVM heap
+          memory: 384M    # Balanced for -Xmx256m JVM heap
         reservations:
           memory: 128M    # Guaranteed minimum
 

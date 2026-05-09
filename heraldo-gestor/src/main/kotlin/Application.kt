@@ -28,12 +28,12 @@ private val logger = LoggerFactory.getLogger("com.netbug94.ApplicationKt")
 fun Application.module() {
     logger.info("🧠 Heraldo Gestor booting...")
 
-    // 1. Create a dynamic Koin module to hold Ktor's config
+    // Create a dynamic Koin module to hold Ktor's config
     val configModule = module {
         single<ApplicationConfig> { environment.config }
     }
 
-    // 2. Load Koin with both the config and your app module
+    // Load Koin with both the config and app module
     install(Koin) {
         slf4jLogger()
         modules(configModule, appModule)
@@ -57,13 +57,11 @@ fun Application.module() {
         masking = false
     }
 
-    // ── CRITICAL FIX: The Stateless Cryptographic Seal ────────────
-    // Ktor grabs your HERALDO_INTERNAL_TOKEN from the Docker .env to lock the session
+    // The Stateless Cryptographic Seal
+    // Ktor grabs HERALDO_INTERNAL_TOKEN from the Docker .env to lock the session
     val secretKey = System.getenv("HERALDO_INTERNAL_TOKEN") ?: "fallback_super_secret_change_me_in_prod"
 
-    // Auth: install Sessions plugin with our secret key
     installAuth(secretKey)
-    // ──────────────────────────────────────────────────────────────
 
     authRoutes()
 
