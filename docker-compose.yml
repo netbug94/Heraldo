@@ -18,9 +18,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M    # Ceiling for Puppeteer/Chrome
+          memory: 512M # Ceiling for Puppeteer/Chrome
         reservations:
-          memory: 256M    # Guaranteed minimum
+          memory: 256M # Guaranteed minimum
 
   gestor:
     build:
@@ -46,9 +46,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M    # Balanced for -Xmx256m JVM heap
+          memory: 1G # 1Gig to prevent Puppeteer OOM crashes
         reservations:
-          memory: 128M    # Guaranteed minimum
+          memory: 512M # Guaranteed minimum
 
 networks:
   heraldo-network:

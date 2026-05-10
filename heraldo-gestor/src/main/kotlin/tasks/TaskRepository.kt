@@ -151,8 +151,8 @@ class TaskRepository(
                     dailyCache[summaryId] = TaskData(
                         id = summaryId,
                         taskListId = "NONE",
-                        title = "⚠️ ${allMissedTitles.size} Missed Tasks from Previous Days",
-                        description = "The server has returned. These tasks were left in the fog:\n$listStr",
+                        title = "📜‼️: ${allMissedTitles.size} from Yesterday",
+                        description = listStr,
                         dueTime = summaryTaskTime,
                         mensajeroDone = existingSummary?.mensajeroDone ?: false,
                         dueDate = myRealToday
