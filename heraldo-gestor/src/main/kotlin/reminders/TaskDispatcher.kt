@@ -80,14 +80,19 @@ class TaskDispatcher(
                 return@forEach
             }
 
-            val nowMins = userNow.hour * 60 + userNow.minute
-            val dueMins = task.dueTime.hour * 60 + task.dueTime.minute
-            val triggerMins = dueMins - alertLeadTimeMinutes.toInt()
+            val userLocalDateTime = userZDT.toLocalDateTime().withSecond(0).withNano(0)
+            val targetDate = task.dueDate ?: userDate
+            var triggerDateTime = targetDate.atTime(task.dueTime).minusMinutes(alertLeadTimeMinutes)
 
-            var minutesLate = nowMins - triggerMins
+            if (task.dueDate == null && triggerDateTime.isAfter(userLocalDateTime)) {
+                val yesterdayTrigger = triggerDateTime.minusDays(1)
 
-            if (minutesLate < -720) minutesLate += 1440
-            if (minutesLate > 720) minutesLate -= 1440
+                if (java.time.Duration.between(yesterdayTrigger, userLocalDateTime).toHours() < 4) {
+                    triggerDateTime = yesterdayTrigger
+                }
+            }
+
+            val minutesLate = java.time.Duration.between(triggerDateTime, userLocalDateTime).toMinutes().toInt()
 
             val isTimeToTrigger = minutesLate >= 0
             val isSignificantlyLate = minutesLate > 2

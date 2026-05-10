@@ -15,11 +15,22 @@ export class WhatsAppManager {
     private client: WAClient | null = null;
     public sessionState: any = { status: 'OFFLINE' };
 
+    private lastPingTime: number = 0;
+    private readonly PING_COOLDOWN_MS = 30000; // 30-second rate limit
+
     constructor() {
         if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
     }
 
-    private pingGestor() {
+    private pingGestor(force: boolean = false) {
+        const now = Date.now();
+
+        // If not forced, check if we are still in the cooldown period
+        if (!force && (now - this.lastPingTime < this.PING_COOLDOWN_MS)) {
+            return;
+        }
+
+        this.lastPingTime = now;
         const API_KEY = process.env.HERALDO_INTERNAL_TOKEN || '';
 
         fetch(GESTOR_WEBHOOK_URL, {
@@ -59,14 +70,14 @@ export class WhatsAppManager {
         client.on('qr', (qr) => {
             this.sessionState = { status: 'AWAITING_QR', qrCode: qr };
             qrcode.generate(qr, { small: true });
-            this.pingGestor(); // Let the dashboard know we need a scan
+            this.pingGestor(); // Standard ping (will be throttled to once per 30s)
         });
 
         client.on('ready', () => {
             this.sessionState = { status: 'CONNECTED' };
             this.client = client;
             logger.info(`✅ Primary Session Connected (The Flame is Kindled)`);
-            this.pingGestor();
+            this.pingGestor(true); // FORCE ping to immediately show "Connected" on dashboard
         });
 
         client.on('disconnected', (reason) => {
@@ -79,13 +90,13 @@ export class WhatsAppManager {
                 this.client = null;
             }
 
-            this.pingGestor();
+            this.pingGestor(true); // FORCE ping to immediately show "Offline"
 
-            // Auto-heal: Try to reconnect after 10 seconds
+            // Auto-heal: Increased to 30 seconds to prevent rapid-fire crash loops
             setTimeout(() => {
                 logger.info("🔄 Auto-healing: Attempting to reconnect WhatsApp...");
                 this.initAccount().catch(err => logger.error(`🚨 Reconnect failed: ${err}`));
-            }, 10000);
+            }, 30000);
         });
 
         client.on('auth_failure', async (msg) => {
@@ -94,7 +105,7 @@ export class WhatsAppManager {
 
             // Delete corrupted session data so it doesn't get stuck in a boot loop
             await this.deleteAccount();
-            this.pingGestor();
+            this.pingGestor(true);
         });
 
         try {

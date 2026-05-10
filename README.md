@@ -1,14 +1,16 @@
 # Heraldo: Personal Automation Engine ⚙️
 
 A rock-solid, containerized microservice architecture for personal task automation.
-Composed of a Kotlin backend (`heraldo-gestor`) that monitors Google APIs, and a Node.js/Puppeteer microservice (`heraldo-mensajero`) that dispatches real-time alerts directly to WhatsApp.
+Composed of a Kotlin/Ktor backend (`heraldo-gestor`) that monitors Google APIs, and a Node.js/Puppeteer microservice (`heraldo-mensajero`) that dispatches real-time alerts directly to WhatsApp.
 
 ---
 
 ## 📋 Prerequisites
 - **Docker** and **Docker Compose** installed on your server.
 - A **Google Cloud Console** project with the Google Tasks and Calendar APIs enabled.
-- A **GitHub Gist** containing your timezone string (e.g., `America/Hermosillo`).
+  - Read and Write permission for Tasks.
+  - Read-only permission for Calendar.
+- A **GitHub Gist** containing your timezone string (e.g., `America/Mexico_City`).
 
 ---
 
@@ -18,7 +20,7 @@ This repository is strictly configured to protect your sensitive data. Your API 
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/your-username/Heraldo.git](https://github.com/your-username/Heraldo.git)
+git clone https://github.com/your-username/Heraldo.git
 cd Heraldo
 ```
 
@@ -28,13 +30,23 @@ Create your environment file from the provided template:
 cp .env.example .env
 ```
 Open `.env` and fill in your details:
-- **HERALDO_INTERNAL_TOKEN**: Generate a random secure string. Both services use this for internal auth.
-- **MENSAJERO_PHONE**: Your target WhatsApp number (include country code, e.g., `+52...`).
+```bash
+nano .env
+```
+
+- **HERALDO_INTERNAL_TOKEN**: A secure password used for communication between the two services.
+  - **Action**: Run `openssl rand -hex 32` in your terminal and paste the result as the value.
+- **MENSAJERO_PHONE**: The WhatsApp number that will receive the alerts.
+  - **Format**: Include country code without `+` or spaces (e.g., `5211234567890`).
 - **GIST_TIMEZONE_URL**: The **Raw** URL to your timezone GitHub Gist.
-- **GOOGLE_CREDENTIALS_JSON**: Paste your entire `credentials.json` content here inside single quotes: `'{"installed":...}'`.
+  - **Action**: Create a [New Gist](https://gist.github.com/) containing only your timezone string (e.g., `America/Mexico_City`). Click **"Raw"** and copy that URL.
+- **GOOGLE_CREDENTIALS_JSON**: Your Google Cloud OAuth client secret.
+  - **Action**: Download your `credentials.json` from the Google Cloud Console (APIs & Services > Credentials). Paste the entire JSON content here **inside single quotes**: `'{"installed":...}'`.
+  - **Note**: Ensure your Google project is set to "Production" in the OAuth Consent Screen (no verification or payment required) to avoid token expiration.
+- **DASHBOARD_USER/PASSWORD**: Set a username and password to protect your web dashboards.
 
 ### 3. Start the Engine
-Navigate to the scripts folder and run the bootstrapper. Using `bash` directly bypasses any permission issues.
+Navigate to the `scripts/` folder and run the bootstrapper using `bash`:
 ```bash
 cd scripts
 bash RISE.sh
@@ -43,14 +55,18 @@ bash RISE.sh
 ### 4. Authenticate Services (One-Time Setup)
 
 #### Step A: WhatsApp Authentication
-1. Run `bash LOGS.sh` in the scripts folder.
-2. Open WhatsApp on your phone, go to Linked Devices, and scan the ASCII QR code that appears in the terminal.
+1. **UI Path**: Go to the web dashboard at `http://your-server-ip:3000`. Login and click **"Kindle the Flame"**.
+2. **Terminal Path**: Run `bash LOGS.sh` in the `scripts/` folder.
+3. **Scan**: Open WhatsApp on your phone, go to **Linked Devices**, and scan the QR code that appears (either on screen or in terminal).
 
 #### Step B: Google Authentication
-1. Look for the **"🚨 GOOGLE AUTH REQUIRED"** link in the logs.
-2. Copy the URL into your browser and authorize your account.
-3. The browser will redirect to a "Site cannot be reached" page (localhost:8080). **Copy the code= value** from that URL's address bar.
-4. Paste the code into your Heraldo Dashboard (`your-server-ip:8080`) to finalize the link.
+1. **UI Path**: Go to the web dashboard at `http://your-server-ip:8080`.
+2. **Renew**: Click **"Renew the Oath"** (or **"Stoke the Flame"** in the header).
+3. **Authorize**: Copy the generated URL into your browser and authorize your account.
+4. **Redirect**: The browser will redirect to a "Site cannot be reached" page (usually `http://localhost:8080/Callback?code=...`).
+5. **Finalize**: 
+   - **Option 1 (Recommended)**: Use SSH Tunneling (`ssh -L 8080:localhost:8080 user@server-ip`) before clicking the link so the redirect works automatically.
+   - **Option 2 (Manual)**: Change `localhost` to `your-server-ip` in the address bar of the "Site cannot be reached" page and hit Enter.
 
 ---
 
