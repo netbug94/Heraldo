@@ -8,8 +8,8 @@ Composed of a Kotlin/Ktor backend (`heraldo-gestor`) that monitors Google APIs, 
 ## 📋 Prerequisites
 - **Docker** and **Docker Compose** installed on your server.
 - A **Google Cloud Console** project with the Google Tasks and Calendar APIs enabled.
-  - Read and Write permission for Tasks.
-  - Read-only permission for Calendar.
+    - Read and Write permission for Tasks.
+    - Read-only permission for Calendar.
 - A **GitHub Gist** containing your timezone string (e.g., `America/Mexico_City`).
 
 ---
@@ -35,14 +35,14 @@ nano .env
 ```
 
 - **HERALDO_INTERNAL_TOKEN**: A secure password used for communication between the two services.
-  - **Action**: Run `openssl rand -hex 32` in your terminal and paste the result as the value.
+    - **Action**: Run `openssl rand -hex 32` in your terminal and paste the result as the value.
 - **MENSAJERO_PHONE**: The WhatsApp number that will receive the alerts.
-  - **Format**: Include country code without `+` or spaces (e.g., `5211234567890`).
+    - **Format**: Include country code with or without `+` and no spaces (e.g., `5211234567890` or `+5211234567890`).
 - **GIST_TIMEZONE_URL**: The **Raw** URL to your timezone GitHub Gist.
-  - **Action**: Create a [New Gist](https://gist.github.com/) containing only your timezone string (e.g., `America/Mexico_City`). Click **"Raw"** and copy that URL.
+    - **Action**: Create a [New Gist](https://gist.github.com/) containing only your timezone string (e.g., `America/Mexico_City`). Click **"Raw"** and copy that URL.
 - **GOOGLE_CREDENTIALS_JSON**: Your Google Cloud OAuth client secret.
-  - **Action**: Download your `credentials.json` from the Google Cloud Console (APIs & Services > Credentials). Paste the entire JSON content here **inside single quotes**: `'{"installed":...}'`.
-  - **Note**: Ensure your Google project is set to "Production" in the OAuth Consent Screen (no verification or payment required) to avoid token expiration.
+    - **Action**: Download your `credentials.json` from the Google Cloud Console (APIs & Services > Credentials). Paste the entire JSON content here **inside single quotes**: `'{"installed":...}'`.
+    - **Note**: Ensure your Google project is set to "Production" in the OAuth Consent Screen (no verification or payment required) to avoid token expiration.
 - **DASHBOARD_USER/PASSWORD**: Set a username and password to protect your web dashboards.
 
 ### 3. Start the Engine
@@ -64,9 +64,9 @@ bash RISE.sh
 2. **Renew**: Click **"Renew the Oath"** (or **"Stoke the Flame"** in the header).
 3. **Authorize**: Copy the generated URL into your browser and authorize your account.
 4. **Redirect**: The browser will redirect to a "Site cannot be reached" page (usually `http://localhost:8080/Callback?code=...`).
-5. **Finalize**: 
-   - **Option 1 (Recommended)**: Use SSH Tunneling (`ssh -L 8080:localhost:8080 user@server-ip`) before clicking the link so the redirect works automatically.
-   - **Option 2 (Manual)**: Change `localhost` to `your-server-ip` in the address bar of the "Site cannot be reached" page and hit Enter.
+5. **Finalize**:
+    - **Option 1 (Recommended)**: Use SSH Tunneling (`ssh -L 8080:localhost:8080 user@server-ip`) before clicking the link so the redirect works automatically.
+    - **Option 2 (Manual)**: Change `localhost` to `your-server-ip` in the address bar of the "Site cannot be reached" page and hit Enter.
 
 ---
 
