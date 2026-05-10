@@ -108,9 +108,9 @@ class TaskDispatcher(
 
                 // Prevent the "PAST DUE" text from sticking to the Type 3 Summary task
                 val displayTitle = if (isSignificantlyLate && !task.id.startsWith("summary_")) {
-                    "⚠️ PAST DUE\n⏰ Originally scheduled for: ${task.dueTime}\n\n${task.title}"
+                    "📜❗ PAST DUE\n⏳ Scheduled: ${task.dueTime}\n\n${task.title}"
                 } else {
-                    task.title
+                    "📜 ${task.title}"
                 }
 
                 logger.info("🚀 TRIGGER: Sending '${task.title}' (Attempt ${task.retryCount + 1})")
