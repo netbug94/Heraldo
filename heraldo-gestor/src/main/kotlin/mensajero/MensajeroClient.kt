@@ -1,6 +1,5 @@
 package com.netbug94.mensajero
 
-import com.netbug94.core.SettingsRepository
 import com.netbug94.core.logger
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -14,9 +13,7 @@ class MensajeroClient(
     private val client: HttpClient,
     phoneNumber: String,
     private val apiKey: String?,
-    private val baseUrl: String,
-    private val settings: SettingsRepository,
-    private val defaultTemplate: String
+    private val baseUrl: String
 ) {
     private val logger by logger()
 
@@ -49,13 +46,7 @@ class MensajeroClient(
     }
 
     suspend fun sendMessage(title: String, description: String?): Boolean {
-        // Fetch fresh template every time
-        val currentTemplate = settings.getMensajeroTemplate(defaultTemplate)
-
-        val header = currentTemplate
-            .replace("{title}", title.trim())
-            .replace("%s", title.trim())
-        val boldHeader = "*$header*"
+        val boldHeader = "*${title.trim()}*"
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
 
         val fullMessage = "$boldHeader$body"
@@ -82,9 +73,5 @@ class MensajeroClient(
             logger.error("🚨 MensajeroClient Connection Error: ${e.message}", e)
             false
         }
-    }
-
-    companion object {
-        const val DEFAULT_TEMPLATE = "🔔 *TASK: {title}*"
     }
 }

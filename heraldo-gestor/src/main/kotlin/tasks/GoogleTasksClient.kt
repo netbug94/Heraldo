@@ -16,6 +16,7 @@ import com.netbug94.core.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.UUID
 
 private const val TOKENS_DIRECTORY_PATH = "tokens"
 private const val APPLICATION_NAME = "HeraldoGestor"
@@ -66,7 +67,7 @@ class GoogleTasksClient {
         }
 
         // Generate CSRF state and Auth URL.
-        val state = java.util.UUID.randomUUID().toString()
+        val state = UUID.randomUUID().toString()
         expectedState = state
 
         val externalPort = System.getenv("EXTERNAL_PORT") ?: "8080"

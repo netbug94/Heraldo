@@ -4,7 +4,7 @@ import com.netbug94.tasks.TaskData
 
 internal object DashboardViews {
 
-    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?, currentTemplate: String): String {
+    fun renderIndex(tasks: List<TaskData>, currentZone: String, formattedTime: String, authLink: String?, lastSync: String): String {
         val taskListHtml = tasks.joinToString("") { task ->
             val (statusClass, statusText, icon) = when {
                 task.mensajeroDone -> Triple("sent", "Fulfilled", "🪶")
@@ -39,19 +39,6 @@ internal object DashboardViews {
             """
         } else ""
 
-        // UPDATED: Subtle, collapsible, mobile-friendly template editor
-        val templateFormHtml = """
-            <details style="margin: 1.5rem 0; padding: 0.75rem 1rem; background: rgba(10, 10, 10, 0.4); border: 1px dashed #3a3835; border-radius: 4px; cursor: pointer;">
-                <summary style="color: #8a867e; font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; outline: none; user-select: none;">
-                    ⚙️ Inscribe Decree Template
-                </summary>
-                <form action="/template" method="POST" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; cursor: default;">
-                    <input type="text" name="template" value="$currentTemplate" style="flex: 1 1 200px; background: #050505; color: #c87a2a; border: 1px solid #54514d; padding: 10px 12px; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; outline: none; box-sizing: border-box;">
-                    <button type="submit" class="btn btn-secondary" style="flex: 0 1 auto; white-space: nowrap;">Seal Template</button>
-                </form>
-            </details>
-        """.trimIndent()
-
         return """
             <!DOCTYPE html>
             <html lang="en">
@@ -67,13 +54,11 @@ internal object DashboardViews {
                 
                 <style>
                     @media (max-width: 600px) {
-                        /* Stack the header text and buttons vertically on phones */
                         .header {
                             flex-direction: column !important;
                             align-items: flex-start !important;
                             gap: 1rem;
                         }
-                        /* Make buttons full width on small screens */
                         .btn-group {
                             width: 100%;
                             display: flex;
@@ -85,7 +70,6 @@ internal object DashboardViews {
                             text-align: center;
                             box-sizing: border-box;
                         }
-                        /* Prevent long titles from breaking the task list layout */
                         .task-item {
                             flex-direction: column !important;
                             align-items: flex-start !important;
@@ -95,9 +79,6 @@ internal object DashboardViews {
                             align-self: flex-start !important;
                         }
                     }
-                    /* Custom scrollbar for the template details to avoid layout shifts */
-                    details > summary { list-style: none; }
-                    details > summary::-webkit-details-marker { display: none; }
                 </style>
             </head>
             <body>
@@ -108,6 +89,7 @@ internal object DashboardViews {
                             <div class="stats">
                                 Bearing ${tasks.size} lingering souls today<br>
                                 <div class="zone-badge" style="display: inline-block; margin-top: 0.5rem;">Realm: $currentZone ($formattedTime)</div>
+                                <div style="font-size: 0.85rem; color: #8a867e; margin-top: 0.4rem; font-family: 'Cinzel', serif;">Last Aligned: $lastSync</div>
                             </div>
                         </div>
                         <div class="btn-group">
@@ -118,8 +100,6 @@ internal object DashboardViews {
                     
                     $authBannerHtml
                     
-                    $templateFormHtml
-                    
                     <ul style="padding-left: 0; list-style: none;">
                         $finalList
                     </ul>
@@ -128,7 +108,6 @@ internal object DashboardViews {
                 <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ascend" style="position: fixed; bottom: 20px; right: 20px; z-index: 100;">⏶</button>
                 
                 <script>
-                    // WebSocket Logic
                     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                     const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/ws');
                     ws.onmessage = function(event) {
@@ -137,7 +116,6 @@ internal object DashboardViews {
                         }
                     };
 
-                    // Scroll to top Logic
                     const btn = document.getElementById('scroll-top');
                     window.addEventListener('scroll', () => {
                         btn.style.display = window.scrollY > 200 ? 'block' : 'none';

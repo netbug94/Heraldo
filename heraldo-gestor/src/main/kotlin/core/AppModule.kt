@@ -39,11 +39,8 @@ val appModule = module {
         }
     }
 
-    single { SettingsRepository() }
-
     single {
         val config = get<ApplicationConfig>()
-        val settings = get<SettingsRepository>()
 
         val phone = config.propertyOrNull("app.mensajero.phone")?.getString()
             ?: throw IllegalArgumentException("Missing MENSAJERO_PHONE in config/env")
@@ -51,9 +48,7 @@ val appModule = module {
         val apiKey = config.propertyOrNull("app.mensajero.apiKey")?.getString()
         val baseUrl = config.propertyOrNull("app.mensajero.url")?.getString()?.removeSuffix("/") ?: "http://localhost:3000"
 
-        val defaultTemplate = config.propertyOrNull("app.mensajero.template")?.getString() ?: MensajeroClient.DEFAULT_TEMPLATE
-
-        MensajeroClient(get(), phone, apiKey, baseUrl, settings, defaultTemplate)
+        MensajeroClient(get(), phone, apiKey, baseUrl)
     }
 
     single {
