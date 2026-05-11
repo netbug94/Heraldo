@@ -67,8 +67,10 @@ fun Application.dashboardRoutes() {
 
                 val authLink = googleTasksClient.pendingAuthUrl
 
+                // ADDED: Grab the last sync time that is already living in memory
                 val lastSync = repository.lastSyncTime
 
+                // ADDED: Pass lastSync to the view
                 val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink, lastSync)
                 call.respondText(html, ContentType.Text.Html)
             }
