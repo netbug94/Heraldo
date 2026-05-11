@@ -1,9 +1,7 @@
 package com.netbug94.dashboard
 
 import com.netbug94.auth.requireAuth
-import com.netbug94.core.SettingsRepository
 import com.netbug94.core.TimezoneProvider
-import com.netbug94.mensajero.MensajeroClient
 import com.netbug94.tasks.GoogleTasksClient
 import com.netbug94.tasks.TaskRepository
 import io.ktor.http.*
@@ -26,7 +24,6 @@ fun Application.dashboardRoutes() {
     val repository by inject<TaskRepository>()
     val timezoneProvider by inject<TimezoneProvider>()
     val googleTasksClient by inject<GoogleTasksClient>()
-    val settings by inject<SettingsRepository>()
 
     routing {
         get("/Callback") {
@@ -70,22 +67,12 @@ fun Application.dashboardRoutes() {
 
                 val authLink = googleTasksClient.pendingAuthUrl
 
-                val defaultTemplate = call.application.environment.config.propertyOrNull("app.mensajero.template")?.getString() ?: MensajeroClient.DEFAULT_TEMPLATE
-                val currentTemplate = settings.getMensajeroTemplate(defaultTemplate)
+                // ADDED: Grab the last sync time that is already living in memory
+                val lastSync = repository.lastSyncTime
 
-                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink, currentTemplate)
+                // ADDED: Pass lastSync to the view
+                val html = DashboardViews.renderIndex(tasks, currentZone, formattedTime, authLink, lastSync)
                 call.respondText(html, ContentType.Text.Html)
-            }
-
-            post("/template") {
-                val formParameters = call.receiveParameters()
-                val newTemplate = formParameters["template"]?.trim()
-
-                if (!newTemplate.isNullOrEmpty()) {
-                    settings.saveMensajeroTemplate(newTemplate)
-                }
-
-                call.respondRedirect("/")
             }
 
             get("/sync") {
