@@ -46,10 +46,8 @@ class MensajeroClient(
     }
 
     suspend fun sendMessage(title: String, description: String?): Boolean {
-        val boldHeader = "*${title.trim()}*"
         val body = if (!description.isNullOrBlank()) "\n${description.trim()}" else ""
-
-        val fullMessage = "$boldHeader$body"
+        val fullMessage = "${title.trim()}$body"
 
         return try {
             val response: HttpResponse = client.post("$baseUrl/send") {
