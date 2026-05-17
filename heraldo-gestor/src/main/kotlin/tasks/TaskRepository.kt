@@ -202,7 +202,7 @@ class TaskRepository(
             } else if (existing.dueTime != time || existing.title != title || existing.description != notes || existing.dueDate != date) {
                 dailyCache[id] = existing.copy(
                     title = title, description = notes, dueTime = time, dueDate = date,
-                    mensajeroDone = if (existing.dueTime != time || existing.dueDate != date) false else existing.mensajeroDone
+                    mensajeroDone = if (existing.dueTime != time) false else existing.mensajeroDone
                 )
             }
         }
